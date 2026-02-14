@@ -4,6 +4,7 @@ import './Results.css'
 function Results({ level, resultData, quizScore, onDone }) {
   const [aiImage, setAiImage] = useState(null)
   const [score, setScore] = useState(null)
+  const [feedback, setFeedback] = useState('')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -27,6 +28,7 @@ function Results({ level, resultData, quizScore, onDone }) {
         const data = await response.json()
         setAiImage(data.generatedImage)
         setScore(data.score)
+        setFeedback(data.feedback || '')
         setLoading(false)
       } else {
         simulateResults()
@@ -110,6 +112,8 @@ function Results({ level, resultData, quizScore, onDone }) {
           </div>
 
           <div className="score-verdict">{getLabel()}</div>
+
+          {feedback && <p className="ai-feedback">{feedback}</p>}
 
           <button className="results-continue" onClick={() => onDone(isPerfect ? 4 : stars)}>
             Continue →

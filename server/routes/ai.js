@@ -6,107 +6,140 @@ router.post('/process', async (req, res) => {
   try {
     const { drawing, theme, mannequin } = req.body
 
-    // ── Step 1: Image-to-Image with Stability AI ──
     let generatedImage = drawing // fallback to original drawing
+    let score = parseFloat((Math.random() * 3 + 7).toFixed(1)) // fallback random
+    let feedback = 'Great design! Keep experimenting!'
 
-    if (process.env.STABILITY_API_KEY) {
-      try {
-        const base64Data = drawing.replace(/^data:image\/\w+;base64,/, '')
-        const imageBuffer = Buffer.from(base64Data, 'base64')
-
-        const formData = new FormData()
-        const blob = new Blob([imageBuffer], { type: 'image/png' })
-
-        formData.append('init_image', blob, 'drawing.png')
-        formData.append('init_image_mode', 'IMAGE_STRENGTH')
-        formData.append('image_strength', '0.35')
-        formData.append('text_prompts[0][text]',
-          `A fashion model wearing a ${theme} outfit, professional fashion photography, stylish, elegant, high quality, studio lighting`
-        )
-        formData.append('text_prompts[0][weight]', '1')
-        formData.append('cfg_scale', '7')
-        formData.append('samples', '1')
-        formData.append('steps', '30')
-
-        const stabilityResponse = await fetch(
-          'https://api.stability.ai/v1/generation/stable-diffusion-xl-1024-v1-0/image-to-image',
-          {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${process.env.STABILITY_API_KEY}`,
-            },
-            body: formData
-          }
-        )
-
-        if (stabilityResponse.ok) {
-          const stabilityData = await stabilityResponse.json()
-          if (stabilityData.artifacts?.[0]) {
-            generatedImage = `data:image/png;base64,${stabilityData.artifacts[0].base64}`
-          }
-        } else {
-          console.error('Stability API error:', stabilityResponse.status)
-        }
-      } catch (err) {
-        console.error('Stability AI error:', err.message)
-      }
+    if (!process.env.OPENAI_API_KEY) {
+      return res.json({ generatedImage, score, feedback, theme })
     }
 
-    // ── Step 2: Score with GPT-4o Vision ──
-    let score = parseFloat((Math.random() * 3 + 7).toFixed(1)) // fallback random
+    // ── Step 1: Generate fashion image with GPT-4o (image input → image output) ──
+    try {
+      const generateResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o',
+          messages: [
+            {
+              role: 'system',
+              content: `You are a fashion design AI. The user will send you a sketch/drawing of an outfit on a mannequin. 
+Your task is to describe this outfit in vivid detail so it can be used to generate a realistic fashion image.
+Describe: colors, garment types, patterns, accessories, style, and overall aesthetic.
+Theme: "${theme}". Respond with ONLY a JSON object: {"description": "<detailed outfit description>"}`
+            },
+            {
+              role: 'user',
+              content: [
+                { type: 'text', text: `Describe this ${theme} outfit sketch in detail:` },
+                { type: 'image_url', image_url: { url: drawing } }
+              ]
+            }
+          ],
+          max_tokens: 300
+        })
+      })
 
-    if (process.env.OPENAI_API_KEY) {
-      try {
-        const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            model: 'gpt-4o',
-            messages: [
-              {
-                role: 'system',
-                content: `You are a fashion judge in a fun game. Rate the outfit in the image on a scale of 1-10 based on:
+      let outfitDescription = `A stylish ${theme} outfit`
+
+      if (generateResponse.ok) {
+        const descData = await generateResponse.json()
+        const descContent = descData.choices[0].message.content
+        try {
+          const parsed = JSON.parse(descContent)
+          outfitDescription = parsed.description
+        } catch {
+          outfitDescription = descContent
+        }
+      }
+
+      // Now generate the actual image with DALL-E 3
+      const dalleResponse = await fetch('https://api.openai.com/v1/images/generations', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: 'dall-e-3',
+          prompt: `Professional fashion photography of a model wearing: ${outfitDescription}. Theme: ${theme}. Studio lighting, high quality, elegant, full body shot, fashion magazine style.`,
+          n: 1,
+          size: '1024x1024',
+          quality: 'standard',
+          response_format: 'b64_json'
+        })
+      })
+
+      if (dalleResponse.ok) {
+        const dalleData = await dalleResponse.json()
+        if (dalleData.data?.[0]?.b64_json) {
+          generatedImage = `data:image/png;base64,${dalleData.data[0].b64_json}`
+        }
+      } else {
+        const errText = await dalleResponse.text()
+        console.error('DALL-E error:', dalleResponse.status, errText)
+      }
+    } catch (err) {
+      console.error('Image generation error:', err.message)
+    }
+
+    // ── Step 2: Score the generated image with GPT-4o Vision ──
+    try {
+      const scoreResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o',
+          messages: [
+            {
+              role: 'system',
+              content: `You are a fashion judge in a fun game for someone learning English. Rate the outfit on a scale of 7 to 10 based on:
 1. How well it fits the theme "${theme}"
-2. Creativity and originality
+2. Creativity and originality  
 3. Overall aesthetic appeal
 
-Be encouraging but fair. Respond with ONLY a JSON object: {"score": <number>, "feedback": "<brief encouraging feedback>"}`
-              },
-              {
-                role: 'user',
-                content: [
-                  { type: 'text', text: `Rate this ${theme} outfit design:` },
-                  { type: 'image_url', image_url: { url: generatedImage } }
-                ]
-              }
-            ],
-            max_tokens: 200
-          })
+Be encouraging and kind — this is a gift for someone's girlfriend! 
+Respond with ONLY a JSON object: {"score": <number between 7 and 10, can use one decimal>, "feedback": "<brief encouraging feedback in English, 1-2 sentences>"}`
+            },
+            {
+              role: 'user',
+              content: [
+                { type: 'text', text: `Rate this ${theme} outfit:` },
+                { type: 'image_url', image_url: { url: generatedImage } }
+              ]
+            }
+          ],
+          max_tokens: 200
         })
+      })
 
-        if (openaiResponse.ok) {
-          const openaiData = await openaiResponse.json()
-          const content = openaiData.choices[0].message.content
-          try {
-            const parsed = JSON.parse(content)
-            score = parsed.score
-          } catch {
-            // If JSON parse fails, try to extract number
-            const match = content.match(/\d+\.?\d*/)
-            if (match) score = parseFloat(match[0])
-          }
+      if (scoreResponse.ok) {
+        const scoreData = await scoreResponse.json()
+        const content = scoreData.choices[0].message.content
+        try {
+          const parsed = JSON.parse(content)
+          score = parsed.score
+          feedback = parsed.feedback || feedback
+        } catch {
+          const match = content.match(/\d+\.?\d*/)
+          if (match) score = parseFloat(match[0])
         }
-      } catch (err) {
-        console.error('OpenAI error:', err.message)
       }
+    } catch (err) {
+      console.error('Scoring error:', err.message)
     }
 
     res.json({
       generatedImage,
       score,
+      feedback,
       theme
     })
   } catch (err) {

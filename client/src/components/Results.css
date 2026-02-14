@@ -162,6 +162,18 @@
   text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.2);
 }
 
+.ai-feedback {
+  font-family: 'Fredoka One', cursive;
+  font-size: 15px;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  padding: 8px 18px;
+  max-width: 400px;
+  text-align: center;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.15);
+}
+
 /* ── Continue ── */
 .results-continue {
   font-family: 'Fredoka One', cursive;
