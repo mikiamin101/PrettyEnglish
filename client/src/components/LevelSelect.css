@@ -1,0 +1,145 @@
+.level-select {
+  width: 100%;
+  height: 100vh;
+  background: linear-gradient(180deg, #FFE066 0%, #FFD93D 50%, #FFCC02 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 15px 20px;
+  overflow-y: auto;
+  position: relative;
+}
+
+.back-btn {
+  position: absolute;
+  top: 12px;
+  left: 15px;
+  font-family: 'Fredoka One', cursive;
+  font-size: 16px;
+  background: rgba(255, 255, 255, 0.4);
+  border: 2px solid rgba(107, 66, 38, 0.3);
+  border-radius: 20px;
+  padding: 6px 18px;
+  color: #6B4226;
+  cursor: pointer;
+  transition: all 0.2s;
+  z-index: 10;
+}
+
+.back-btn:hover {
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.levels-header {
+  font-size: 42px;
+  margin-bottom: 18px;
+  margin-top: 5px;
+}
+
+.levels-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
+  max-width: 900px;
+  padding-bottom: 20px;
+}
+
+/* ── Wooden Level Box ── */
+.level-box {
+  width: 115px;
+  height: 125px;
+  background: linear-gradient(180deg, #D4A373 0%, #A97B50 50%, #8B5E3C 100%);
+  border: 3px solid #6B4226;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  box-shadow:
+    0 4px 8px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.1);
+  /* Wood grain effect */
+  background-image:
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 8px,
+      rgba(0, 0, 0, 0.03) 8px,
+      rgba(0, 0, 0, 0.03) 12px
+    );
+}
+
+.level-box.unlocked:hover {
+  transform: translateY(-4px) scale(1.05);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+}
+
+.level-box.unlocked:active {
+  transform: translateY(-1px) scale(1.02);
+}
+
+.level-box.locked {
+  opacity: 0.55;
+  cursor: not-allowed;
+  filter: grayscale(30%);
+}
+
+.level-number {
+  font-family: 'Fredoka One', cursive;
+  font-size: 34px;
+  color: #FFF8E7;
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.3);
+}
+
+.level-theme {
+  font-family: 'Rubik', sans-serif;
+  font-size: 10px;
+  color: #FFF8E7;
+  text-align: center;
+  opacity: 0.9;
+  max-width: 95px;
+  line-height: 1.2;
+  font-weight: 500;
+}
+
+/* ── Stars ── */
+.level-stars {
+  display: flex;
+  gap: 2px;
+}
+
+.star {
+  font-size: 19px;
+  transition: all 0.3s;
+}
+
+.star-filled {
+  color: #FFD700;
+  text-shadow: 0 0 6px rgba(255, 215, 0, 0.6);
+}
+
+.star-empty {
+  color: #333;
+  opacity: 0.4;
+}
+
+/* ── Lock ── */
+.lock-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  background: rgba(0, 0, 0, 0.12);
+  border-radius: 12px;
+}

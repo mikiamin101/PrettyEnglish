@@ -1,0 +1,114 @@
+.auth-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(5px);
+  animation: overlayIn 0.25s ease;
+}
+
+@keyframes overlayIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.auth-modal {
+  background: white;
+  border-radius: 22px;
+  padding: 30px 40px;
+  min-width: 340px;
+  position: relative;
+  box-shadow: 0 12px 45px rgba(0, 0, 0, 0.3);
+  animation: modalSlide 0.3s ease;
+}
+
+@keyframes modalSlide {
+  from { transform: translateY(-20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.auth-close {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  font-size: 22px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #aaa;
+  transition: color 0.2s;
+}
+
+.auth-close:hover {
+  color: #333;
+}
+
+.auth-title {
+  text-align: center;
+  font-size: 26px;
+  margin-bottom: 22px;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.auth-input {
+  font-family: 'Rubik', sans-serif;
+  font-size: 16px;
+  padding: 13px 18px;
+  border: 2.5px solid #e0e0e0;
+  border-radius: 12px;
+  outline: none;
+  transition: border-color 0.25s;
+}
+
+.auth-input:focus {
+  border-color: #FF6B6B;
+  box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.12);
+}
+
+.auth-submit {
+  font-family: 'Fredoka One', cursive;
+  font-size: 18px;
+  padding: 13px;
+  background: linear-gradient(180deg, #FF6B6B, #EE5A24);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+
+.auth-submit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(238, 90, 36, 0.35);
+}
+
+.auth-message {
+  text-align: center;
+  font-family: 'Rubik', sans-serif;
+  font-size: 14px;
+  color: #666;
+  margin-top: 12px;
+}
+
+.auth-toggle {
+  display: block;
+  margin: 16px auto 0;
+  background: none;
+  border: none;
+  color: #667eea;
+  font-family: 'Rubik', sans-serif;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.auth-toggle:hover {
+  text-decoration: underline;
+}

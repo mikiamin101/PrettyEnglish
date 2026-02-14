@@ -1,0 +1,61 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: 'Rubik', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Rotation prompt - only on mobile portrait */
+@media screen and (max-width: 1023px) and (orientation: portrait) {
+  #root::after {
+    content: '📱 Please rotate your phone to landscape mode \A סובבי את הטלפון לרוחב';
+    white-space: pre-wrap;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: #FFD93D;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Fredoka One', cursive;
+    font-size: 22px;
+    color: #6B4226;
+    text-align: center;
+    padding: 40px;
+    z-index: 99999;
+    line-height: 1.6;
+  }
+}
+
+.bubble-text {
+  font-family: 'Fredoka One', cursive;
+  color: #6B4226;
+  text-shadow: 2px 2px 0 #FFB347, -1px -1px 0 #FFB347, 1px -1px 0 #FFB347, -1px 1px 0 #FFB347;
+}
+
+.hebrew-text {
+  font-family: 'Secular One', 'Rubik', sans-serif;
+  direction: rtl;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(107, 66, 38, 0.3);
+  border-radius: 3px;
+}

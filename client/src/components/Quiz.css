@@ -1,0 +1,372 @@
+.quiz {
+  width: 100%;
+  height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 15px;
+  position: relative;
+}
+
+/* ── Back Button ── */
+.quiz-back {
+  position: absolute;
+  top: 12px;
+  left: 15px;
+  font-family: 'Fredoka One', cursive;
+  font-size: 16px;
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 20px;
+  padding: 6px 18px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  z-index: 10;
+}
+
+.quiz-back:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.skip-btn {
+  position: absolute;
+  top: 12px;
+  right: 15px;
+  font-family: 'Fredoka One', cursive;
+  font-size: 16px;
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 20px;
+  padding: 6px 18px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  z-index: 10;
+}
+
+.skip-btn:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+/* ── Header ── */
+.quiz-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 16px;
+}
+
+.quiz-title-text {
+  color: white;
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.25);
+  font-size: 24px;
+  white-space: nowrap;
+}
+
+.quiz-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.progress-bar {
+  width: 160px;
+  height: 14px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 7px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #FFD93D, #FF6B6B);
+  border-radius: 7px;
+  transition: width 0.4s ease;
+}
+
+.progress-text {
+  color: rgba(255, 255, 255, 0.9);
+  font-family: 'Rubik', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.quiz-score-display {
+  color: #FFD93D;
+  font-family: 'Fredoka One', cursive;
+  font-size: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 4px 14px;
+  border-radius: 12px;
+}
+
+/* ── Quiz Card ── */
+.quiz-card {
+  background: white;
+  border-radius: 22px;
+  padding: 28px 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.25);
+  min-width: 420px;
+  max-width: 520px;
+}
+
+.word-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.word-label {
+  font-size: 14px;
+  color: #888;
+}
+
+.word-english {
+  font-family: 'Fredoka One', cursive;
+  font-size: 40px;
+  color: #333;
+  animation: wordAppear 0.4s ease;
+}
+
+@keyframes wordAppear {
+  from { transform: scale(0.8); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.word-hint {
+  font-size: 13px;
+  color: #aaa;
+  font-family: 'Rubik', sans-serif;
+}
+
+/* ── Answer Form ── */
+.answer-form {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+
+.answer-input {
+  flex: 1;
+  font-family: 'Rubik', sans-serif;
+  font-size: 20px;
+  padding: 12px 18px;
+  border: 2.5px solid #e0e0e0;
+  border-radius: 14px;
+  outline: none;
+  transition: border-color 0.25s;
+  text-align: right;
+}
+
+.answer-input:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+}
+
+.answer-input:disabled {
+  background: #f8f8f8;
+}
+
+.submit-btn {
+  font-family: 'Fredoka One', cursive;
+  font-size: 16px;
+  padding: 12px 22px;
+  background: linear-gradient(180deg, #667eea, #5a6fd6);
+  color: white;
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(102, 126, 234, 0.45);
+}
+
+/* ── Feedback ── */
+.feedback {
+  padding: 10px 22px;
+  border-radius: 12px;
+  font-size: 18px;
+  font-weight: 700;
+  animation: feedbackPop 0.3s ease;
+}
+
+@keyframes feedbackPop {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.feedback.correct {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #b7dfc5;
+}
+
+.feedback.incorrect {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f1b0b7;
+}
+
+/* ── Next Button ── */
+.next-btn {
+  font-family: 'Fredoka One', cursive;
+  font-size: 16px;
+  padding: 10px 28px;
+  background: linear-gradient(180deg, #FFD93D, #FFCC02);
+  color: #6B4226;
+  border: 2px solid #D4A373;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.next-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 3px 10px rgba(212, 163, 115, 0.4);
+}
+
+/* ── Quiz Complete Screen ── */
+.quiz-complete {
+  background: white;
+  border-radius: 24px;
+  padding: 28px 45px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.25);
+  max-width: 500px;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.quiz-complete-title {
+  color: #333;
+  text-shadow: none;
+  font-size: 30px;
+}
+
+.quiz-final-score {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.score-number {
+  font-family: 'Fredoka One', cursive;
+  font-size: 52px;
+}
+
+.score-number.passed {
+  color: #27ae60;
+}
+
+.score-number.failed {
+  color: #e74c3c;
+}
+
+.score-total {
+  font-family: 'Fredoka One', cursive;
+  font-size: 24px;
+  color: #999;
+}
+
+.quiz-message {
+  font-family: 'Secular One', sans-serif;
+  font-size: 17px;
+  color: #555;
+}
+
+/* ── Wrong Words List ── */
+.wrong-words-list {
+  background: #fff9f0;
+  border: 2px solid #ffe0b2;
+  border-radius: 14px;
+  padding: 14px 18px;
+  width: 100%;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.wrong-words-title {
+  font-family: 'Secular One', sans-serif;
+  font-size: 14px;
+  color: #e67e22;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.wrong-word-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 5px 0;
+  border-bottom: 1px solid #f0e0d0;
+}
+
+.wrong-word-item:last-child {
+  border-bottom: none;
+}
+
+.wrong-english {
+  font-family: 'Fredoka One', cursive;
+  font-size: 15px;
+  color: #333;
+}
+
+.wrong-arrow {
+  color: #ccc;
+  font-size: 14px;
+}
+
+.wrong-hebrew {
+  font-family: 'Secular One', sans-serif;
+  font-size: 15px;
+  color: #e67e22;
+}
+
+/* ── Action Buttons ── */
+.quiz-action-btn {
+  font-family: 'Fredoka One', cursive;
+  font-size: 20px;
+  padding: 12px 34px;
+  border-radius: 28px;
+  cursor: pointer;
+  transition: all 0.25s;
+  border: none;
+}
+
+.pass-btn {
+  background: linear-gradient(180deg, #6BCB77, #27ae60);
+  color: white;
+  box-shadow: 0 4px 14px rgba(39, 174, 96, 0.4);
+}
+
+.pass-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(39, 174, 96, 0.5);
+}
+
+.retry-btn {
+  background: linear-gradient(180deg, #FF6B6B, #EE5A24);
+  color: white;
+  box-shadow: 0 4px 14px rgba(238, 90, 36, 0.4);
+}
+
+.retry-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(238, 90, 36, 0.5);
+}

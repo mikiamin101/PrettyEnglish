@@ -1,0 +1,27 @@
+CREATE TABLE IF NOT EXISTS users (
+  id SERIAL PRIMARY KEY,
+  username VARCHAR(50) UNIQUE NOT NULL,
+  password_hash VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS level_progress (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id),
+  level_id INTEGER NOT NULL,
+  stars INTEGER DEFAULT 0,
+  best_score DECIMAL(3,1),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(user_id, level_id)
+);
+
+CREATE TABLE IF NOT EXISTS drawings (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id),
+  level_id INTEGER NOT NULL,
+  original_drawing TEXT,
+  ai_generated TEXT,
+  score DECIMAL(3,1),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
