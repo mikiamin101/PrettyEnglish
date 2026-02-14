@@ -126,7 +126,6 @@ function Quiz({ level, onComplete, onBack }) {
   return (
     <div className="quiz">
       <button className="back-btn quiz-back" onClick={onBack}>← Back</button>
-      <button className="skip-btn" onClick={() => onComplete(0)}>Skip →</button>
 
       <div className="quiz-header">
         <h2 className="bubble-text quiz-title-text">Level {level} - Quiz</h2>
