@@ -162,6 +162,14 @@
   cursor: grabbing;
 }
 
+.zoom-hint {
+  font-family: 'Rubik', sans-serif;
+  font-size: 10px;
+  color: #999;
+  margin: 0;
+  text-align: center;
+}
+
 .zoom-badge {
   position: absolute;
   bottom: 6px;

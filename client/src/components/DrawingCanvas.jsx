@@ -89,26 +89,7 @@ function DrawingCanvas({ level, onComplete, onBack }) {
     }
   }
 
-  // ── Zoom with scroll wheel ──
-  const handleWheel = useCallback((e) => {
-    e.preventDefault()
-    const delta = e.deltaY > 0 ? -0.15 : 0.15
-    setZoom(prev => Math.min(5, Math.max(1, prev + delta)))
-  }, [])
-
-  useEffect(() => {
-    const wrapper = wrapperRef.current
-    if (wrapper) {
-      wrapper.addEventListener('wheel', handleWheel, { passive: false })
-      return () => wrapper.removeEventListener('wheel', handleWheel)
-    }
-  }, [handleWheel])
-
-  // Reset pan when zoom goes back to 1
-  useEffect(() => {
-    if (zoom <= 1) setPan({ x: 0, y: 0 })
-  }, [zoom])
-
+  // ── Zoom helpers ──
   const handleZoomIn = () => setZoom(prev => Math.min(5, prev + 0.5))
   const handleZoomOut = () => {
     setZoom(prev => {
@@ -119,7 +100,7 @@ function DrawingCanvas({ level, onComplete, onBack }) {
   }
   const handleZoomReset = () => { setZoom(1); setPan({ x: 0, y: 0 }) }
 
-  // ── Pan with middle mouse or two-finger drag ──
+  // ── Pan helpers ──
   const startPan = (clientX, clientY) => {
     setIsPanning(true)
     panStartRef.current = { x: clientX - pan.x, y: clientY - pan.y }
@@ -135,24 +116,23 @@ function DrawingCanvas({ level, onComplete, onBack }) {
   }
   const stopPan = () => { setIsPanning(false); panStartRef.current = null }
 
+  // ── Canvas mouse/touch handlers ──
   const handleCanvasMouseDown = (e) => {
-    // Middle mouse button = pan
-    if (e.button === 1) {
+    if (tool === 'zoom') {
       e.preventDefault()
-      startPan(e.clientX, e.clientY)
-      return
-    }
-    // When zoomed, single click = pan instead of draw
-    if (zoom > 1) {
-      e.preventDefault()
-      startPan(e.clientX, e.clientY)
+      if (e.button === 2 || e.shiftKey) {
+        handleZoomOut()
+      } else {
+        handleZoomIn()
+        startPan(e.clientX, e.clientY)
+      }
       return
     }
     startDrawing(e)
   }
 
   const handleCanvasMouseMove = (e) => {
-    if (isPanning) {
+    if (tool === 'zoom' && isPanning) {
       movePan(e.clientX, e.clientY)
       return
     }
@@ -160,58 +140,34 @@ function DrawingCanvas({ level, onComplete, onBack }) {
   }
 
   const handleCanvasMouseUp = (e) => {
-    if (isPanning) { stopPan(); return }
+    if (tool === 'zoom') { stopPan(); return }
     stopDrawing()
   }
 
-  // Two-finger touch for pan (when zoomed)
-  const lastTouchDistRef = useRef(null)
   const handleCanvasTouchStart = (e) => {
-    if (e.touches.length === 2) {
+    if (tool === 'zoom') {
       e.preventDefault()
-      const dx = e.touches[0].clientX - e.touches[1].clientX
-      const dy = e.touches[0].clientY - e.touches[1].clientY
-      lastTouchDistRef.current = Math.sqrt(dx * dx + dy * dy)
-      const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2
-      const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2
-      startPan(midX, midY)
-      return
-    }
-    // When zoomed, single finger = pan instead of draw
-    if (zoom > 1) {
-      e.preventDefault()
-      startPan(e.touches[0].clientX, e.touches[0].clientY)
+      if (e.touches.length === 1) {
+        startPan(e.touches[0].clientX, e.touches[0].clientY)
+      }
       return
     }
     startDrawing(e)
   }
 
   const handleCanvasTouchMove = (e) => {
-    if (e.touches.length === 2) {
+    if (tool === 'zoom') {
       e.preventDefault()
-      // Pinch to zoom
-      const dx = e.touches[0].clientX - e.touches[1].clientX
-      const dy = e.touches[0].clientY - e.touches[1].clientY
-      const dist = Math.sqrt(dx * dx + dy * dy)
-      if (lastTouchDistRef.current) {
-        const scale = dist / lastTouchDistRef.current
-        setZoom(prev => Math.min(5, Math.max(1, prev * scale)))
-        lastTouchDistRef.current = dist
+      if (e.touches.length === 1 && isPanning) {
+        movePan(e.touches[0].clientX, e.touches[0].clientY)
       }
-      // Pan
-      const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2
-      const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2
-      movePan(midX, midY)
       return
     }
     draw(e)
   }
 
   const handleCanvasTouchEnd = (e) => {
-    if (e.touches.length < 2) {
-      lastTouchDistRef.current = null
-      stopPan()
-    }
+    if (tool === 'zoom') { stopPan(); return }
     if (e.touches.length === 0) stopDrawing()
   }
 
@@ -424,7 +380,7 @@ function DrawingCanvas({ level, onComplete, onBack }) {
             />
             <canvas
               ref={drawCanvasRef}
-              className={`canvas-draw ${zoom > 1 ? 'canvas-panning' : ''}`}
+              className={`canvas-draw ${tool === 'zoom' ? 'canvas-panning' : ''}`}
               width={CANVAS_SIZE}
               height={CANVAS_SIZE}
               onMouseDown={handleCanvasMouseDown}
@@ -461,6 +417,11 @@ function DrawingCanvas({ level, onComplete, onBack }) {
                 onClick={() => setTool('eraser')}
                 title="Eraser"
               >🧹</button>
+              <button
+                className={`tool-btn ${tool === 'zoom' ? 'active' : ''}`}
+                onClick={() => setTool('zoom')}
+                title="Zoom & Pan"
+              >🔍</button>
             </div>
           </div>
 
@@ -498,14 +459,17 @@ function DrawingCanvas({ level, onComplete, onBack }) {
             <button className="action-btn clear-btn" onClick={handleClear} title="Clear">🗑 Clear</button>
           </div>
 
-          <div className="tool-group">
-            <span className="tool-group-label">Zoom</span>
-            <div className="tool-row">
-              <button className="tool-btn" onClick={handleZoomOut} title="Zoom Out">➖</button>
-              <button className="tool-btn" onClick={handleZoomReset} title="Reset" style={{fontSize:'11px'}}>{Math.round(zoom*100)}%</button>
-              <button className="tool-btn" onClick={handleZoomIn} title="Zoom In">➕</button>
+          {tool === 'zoom' && (
+            <div className="tool-group">
+              <span className="tool-group-label">Zoom: {Math.round(zoom*100)}%</span>
+              <div className="tool-row">
+                <button className="tool-btn" onClick={handleZoomOut} title="Zoom Out">➖</button>
+                <button className="tool-btn" onClick={handleZoomReset} title="Reset">1:1</button>
+                <button className="tool-btn" onClick={handleZoomIn} title="Zoom In">➕</button>
+              </div>
+              <p className="zoom-hint">Tap canvas to zoom in. Drag to pan.</p>
             </div>
-          </div>
+          )}
 
           <button className="action-btn submit-btn-canvas" onClick={handleSubmit}>
             ✨ Make it Real!
