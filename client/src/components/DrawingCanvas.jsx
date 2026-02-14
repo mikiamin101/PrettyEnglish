@@ -2,20 +2,12 @@ import React, { useState, useRef, useEffect, useCallback } from 'react'
 import './DrawingCanvas.css'
 import { levels } from '../data/levels'
 import ColorWheel from './ColorWheel'
+import classicMannequin from '../assets/classic.png'
 
 const CANVAS_SIZE = 400
 
 const MANNEQUINS = [
-  { id: 0, name: 'Classic', skin: '#FFDAB9' },
-  { id: 1, name: 'Rose', skin: '#FFB6C1' },
-  { id: 2, name: 'Golden', skin: '#DEB887' },
-  { id: 3, name: 'Honey', skin: '#D2B48C' },
-  { id: 4, name: 'Caramel', skin: '#C8A882' },
-  { id: 5, name: 'Bronze', skin: '#B8860B' },
-  { id: 6, name: 'Mocha', skin: '#A0522D' },
-  { id: 7, name: 'Cocoa', skin: '#8B4513' },
-  { id: 8, name: 'Ivory', skin: '#FAEBD7' },
-  { id: 9, name: 'Almond', skin: '#D2691E' },
+  { id: 0, name: 'Classic', src: classicMannequin },
 ]
 
 
@@ -34,126 +26,20 @@ function DrawingCanvas({ level, onComplete, onBack }) {
   const lastPosRef = useRef(null)
 
   const drawMannequin = useCallback((ctx, mannequinId) => {
-    const skin = MANNEQUINS[mannequinId].skin
-    const cx = CANVAS_SIZE / 2
-    ctx.save()
-
-    // Head
-    ctx.fillStyle = skin
-    ctx.beginPath()
-    ctx.ellipse(cx, 58, 24, 28, 0, 0, Math.PI * 2)
-    ctx.fill()
-    ctx.strokeStyle = '#555'
-    ctx.lineWidth = 1.5
-    ctx.stroke()
-
-    // Hair
-    ctx.fillStyle = '#333'
-    ctx.beginPath()
-    ctx.ellipse(cx, 45, 26, 18, 0, Math.PI, Math.PI * 2)
-    ctx.fill()
-
-    // Eyes
-    ctx.fillStyle = '#333'
-    ctx.beginPath()
-    ctx.ellipse(cx - 8, 56, 2.5, 3, 0, 0, Math.PI * 2)
-    ctx.fill()
-    ctx.beginPath()
-    ctx.ellipse(cx + 8, 56, 2.5, 3, 0, 0, Math.PI * 2)
-    ctx.fill()
-
-    // Smile
-    ctx.strokeStyle = '#c0392b'
-    ctx.lineWidth = 1.5
-    ctx.beginPath()
-    ctx.arc(cx, 62, 6, 0.1 * Math.PI, 0.9 * Math.PI)
-    ctx.stroke()
-
-    // Neck
-    ctx.fillStyle = skin
-    ctx.fillRect(cx - 7, 84, 14, 20)
-    ctx.strokeStyle = '#555'
-    ctx.lineWidth = 1
-    ctx.strokeRect(cx - 7, 84, 14, 20)
-
-    // Torso
-    ctx.fillStyle = skin
-    ctx.beginPath()
-    ctx.moveTo(cx - 38, 104)
-    ctx.lineTo(cx + 38, 104)
-    ctx.lineTo(cx + 32, 215)
-    ctx.lineTo(cx - 32, 215)
-    ctx.closePath()
-    ctx.fill()
-    ctx.stroke()
-
-    // Left arm
-    ctx.fillStyle = skin
-    ctx.beginPath()
-    ctx.moveTo(cx - 38, 108)
-    ctx.lineTo(cx - 65, 175)
-    ctx.lineTo(cx - 55, 180)
-    ctx.lineTo(cx - 32, 118)
-    ctx.closePath()
-    ctx.fill()
-    ctx.stroke()
-
-    // Right arm
-    ctx.beginPath()
-    ctx.moveTo(cx + 38, 108)
-    ctx.lineTo(cx + 65, 175)
-    ctx.lineTo(cx + 55, 180)
-    ctx.lineTo(cx + 32, 118)
-    ctx.closePath()
-    ctx.fill()
-    ctx.stroke()
-
-    // Left hand
-    ctx.beginPath()
-    ctx.ellipse(cx - 60, 180, 7, 9, -0.3, 0, Math.PI * 2)
-    ctx.fill()
-    ctx.stroke()
-
-    // Right hand
-    ctx.beginPath()
-    ctx.ellipse(cx + 60, 180, 7, 9, 0.3, 0, Math.PI * 2)
-    ctx.fill()
-    ctx.stroke()
-
-    // Left leg
-    ctx.fillStyle = skin
-    ctx.beginPath()
-    ctx.moveTo(cx - 28, 215)
-    ctx.lineTo(cx - 32, 345)
-    ctx.lineTo(cx - 14, 345)
-    ctx.lineTo(cx - 5, 215)
-    ctx.closePath()
-    ctx.fill()
-    ctx.stroke()
-
-    // Right leg
-    ctx.beginPath()
-    ctx.moveTo(cx + 28, 215)
-    ctx.lineTo(cx + 32, 345)
-    ctx.lineTo(cx + 14, 345)
-    ctx.lineTo(cx + 5, 215)
-    ctx.closePath()
-    ctx.fill()
-    ctx.stroke()
-
-    // Left foot
-    ctx.beginPath()
-    ctx.ellipse(cx - 23, 350, 17, 8, 0, 0, Math.PI * 2)
-    ctx.fill()
-    ctx.stroke()
-
-    // Right foot
-    ctx.beginPath()
-    ctx.ellipse(cx + 23, 350, 17, 8, 0, 0, Math.PI * 2)
-    ctx.fill()
-    ctx.stroke()
-
-    ctx.restore()
+    const mannequin = MANNEQUINS[mannequinId] || MANNEQUINS[0]
+    const img = new Image()
+    img.onload = () => {
+      ctx.fillStyle = '#FFFFFF'
+      ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE)
+      // Draw image centered and scaled to fit the canvas
+      const scale = Math.min(CANVAS_SIZE / img.width, CANVAS_SIZE / img.height) * 0.9
+      const w = img.width * scale
+      const h = img.height * scale
+      const x = (CANVAS_SIZE - w) / 2
+      const y = (CANVAS_SIZE - h) / 2
+      ctx.drawImage(img, x, y, w, h)
+    }
+    img.src = mannequin.src
   }, [])
 
   const saveToHistory = useCallback(() => {
@@ -170,8 +56,6 @@ function DrawingCanvas({ level, onComplete, onBack }) {
       const bgCanvas = bgCanvasRef.current
       if (bgCanvas) {
         const bgCtx = bgCanvas.getContext('2d')
-        bgCtx.fillStyle = '#FFFFFF'
-        bgCtx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE)
         drawMannequin(bgCtx, selectedMannequin)
       }
       const drawCanvas = drawCanvasRef.current
@@ -314,29 +198,12 @@ function DrawingCanvas({ level, onComplete, onBack }) {
     }
   }
 
-  // ── Mannequin selection screen ──
-  if (selectedMannequin === null) {
-    return (
-      <div className="drawing-screen">
-        <button className="back-btn drawing-back" onClick={onBack}>← Back</button>
-        <h2 className="bubble-text mannequin-select-title">Choose Your Mannequin</h2>
-        <div className="mannequin-grid">
-          {MANNEQUINS.map((m) => (
-            <button
-              key={m.id}
-              className="mannequin-option"
-              onClick={() => setSelectedMannequin(m.id)}
-            >
-              <div className="mannequin-preview" style={{ background: m.skin }}>
-                <span className="mannequin-emoji">👤</span>
-              </div>
-              <span className="mannequin-name">{m.name}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-    )
-  }
+  // ── Auto-select the only mannequin ──
+  useEffect(() => {
+    if (selectedMannequin === null) {
+      setSelectedMannequin(0)
+    }
+  }, [selectedMannequin])
 
   // ── Drawing screen ──
   return (
