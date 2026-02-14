@@ -4,7 +4,8 @@ const router = Router()
 
 router.post('/process', async (req, res) => {
   try {
-    const { drawing, theme, mannequin } = req.body
+    const { drawing, theme, mannequin, outfitItems } = req.body
+    const itemsList = (outfitItems || []).join(', ')
 
     let generatedImage = drawing // fallback to original drawing
     let score = parseFloat((Math.random() * 3 + 7).toFixed(1)) // fallback random
@@ -24,7 +25,7 @@ router.post('/process', async (req, res) => {
       const imageBlob = new Blob([imageBuffer], { type: 'image/png' })
       formData.append('image[]', imageBlob, 'drawing.png')
       formData.append('model', 'gpt-image-1.5')
-      formData.append('prompt', `Turn this fashion sketch drawing into a photorealistic photograph of a fashion model on a runway catwalk, facing the camera, full body shot. Preserve the exact outfit design, colors, patterns, and style from the sketch. Theme: ${theme}. Natural studio lighting, fashion week photography, realistic fabric textures and draping. Do not add new clothing elements or change the outfit design. No text, no watermarks.`)
+      formData.append('prompt', `Turn this fashion sketch drawing into a photorealistic photograph of a fashion model on a runway catwalk, facing the camera, full body shot. The outfit consists of: ${itemsList}. Preserve the exact outfit design, colors, patterns, and style from the sketch. Theme: ${theme}. Natural studio lighting, fashion week photography, realistic fabric textures and draping. Do not add new clothing elements beyond what is listed. No text, no watermarks.`)
       formData.append('n', '1')
       formData.append('size', '1024x1024')
       formData.append('quality', 'low')

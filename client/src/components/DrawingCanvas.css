@@ -333,3 +333,101 @@
   transform: translateY(-2px);
   box-shadow: 0 6px 18px rgba(238, 90, 36, 0.45);
 }
+
+.submit-btn-canvas:disabled {
+  background: #ccc;
+  color: #888;
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ── Outfit Items Tagger ── */
+.outfit-items-group {
+  max-width: 100%;
+}
+
+.outfit-items-input-row {
+  display: flex;
+  gap: 4px;
+}
+
+.outfit-item-input {
+  flex: 1;
+  min-width: 0;
+  padding: 5px 8px;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  font-family: 'Rubik', sans-serif;
+  font-size: 12px;
+  outline: none;
+}
+
+.outfit-item-input:focus {
+  border-color: #FF6B6B;
+}
+
+.outfit-item-add-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: 2px solid #4CAF50;
+  background: #4CAF50;
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.outfit-item-add-btn:hover {
+  background: #45a049;
+}
+
+.outfit-items-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+  max-height: 60px;
+  overflow-y: auto;
+}
+
+.outfit-item-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: linear-gradient(135deg, #f093fb, #f5576c);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-family: 'Rubik', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.outfit-item-remove {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.8);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0 1px;
+  line-height: 1;
+}
+
+.outfit-item-remove:hover {
+  color: white;
+}
+
+.outfit-items-hint {
+  font-size: 11px;
+  color: #999;
+  font-style: italic;
+  font-family: 'Rubik', sans-serif;
+}

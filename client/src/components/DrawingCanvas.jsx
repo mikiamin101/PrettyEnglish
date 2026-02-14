@@ -23,6 +23,8 @@ function DrawingCanvas({ level, onComplete, onBack }) {
   const [tool, setTool] = useState('brush')
   const [history, setHistory] = useState([])
   const [selectedMannequin, setSelectedMannequin] = useState(null)
+  const [outfitItems, setOutfitItems] = useState([])
+  const [itemInput, setItemInput] = useState('')
   const [zoom, setZoom] = useState(1)
   const [pan, setPan] = useState({ x: 0, y: 0 })
   const [isPanning, setIsPanning] = useState(false)
@@ -313,8 +315,31 @@ function DrawingCanvas({ level, onComplete, onBack }) {
     saveToHistory()
   }
 
+  const addOutfitItem = () => {
+    const trimmed = itemInput.trim()
+    if (trimmed && outfitItems.length < 10) {
+      setOutfitItems(prev => [...prev, trimmed])
+      setItemInput('')
+    }
+  }
+
+  const removeOutfitItem = (index) => {
+    setOutfitItems(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const handleItemKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      addOutfitItem()
+    }
+  }
+
   // Flatten both layers into one image for submission
   const handleSubmit = () => {
+    if (outfitItems.length < 1) {
+      alert('Add at least 1 outfit item to describe what you drew!')
+      return
+    }
     const mergedCanvas = document.createElement('canvas')
     mergedCanvas.width = CANVAS_SIZE
     mergedCanvas.height = CANVAS_SIZE
@@ -325,7 +350,8 @@ function DrawingCanvas({ level, onComplete, onBack }) {
     onComplete({
       drawing: imageData,
       mannequin: selectedMannequin,
-      theme: levelData.theme
+      theme: levelData.theme,
+      outfitItems
     })
   }
 
@@ -471,7 +497,34 @@ function DrawingCanvas({ level, onComplete, onBack }) {
             </div>
           )}
 
-          <button className="action-btn submit-btn-canvas" onClick={handleSubmit}>
+          <div className="tool-group outfit-items-group">
+            <span className="tool-group-label">Outfit Items 👗</span>
+            <div className="outfit-items-input-row">
+              <input
+                type="text"
+                className="outfit-item-input"
+                value={itemInput}
+                onChange={(e) => setItemInput(e.target.value)}
+                onKeyDown={handleItemKeyDown}
+                placeholder="e.g. pink top"
+                maxLength={30}
+              />
+              <button className="outfit-item-add-btn" onClick={addOutfitItem}>+</button>
+            </div>
+            <div className="outfit-items-list">
+              {outfitItems.map((item, i) => (
+                <span key={i} className="outfit-item-tag">
+                  {item}
+                  <button className="outfit-item-remove" onClick={() => removeOutfitItem(i)}>×</button>
+                </span>
+              ))}
+              {outfitItems.length === 0 && (
+                <span className="outfit-items-hint">Add at least 1 item</span>
+              )}
+            </div>
+          </div>
+
+          <button className="action-btn submit-btn-canvas" onClick={handleSubmit} disabled={outfitItems.length < 1}>
             ✨ Make it Real!
           </button>
         </div>

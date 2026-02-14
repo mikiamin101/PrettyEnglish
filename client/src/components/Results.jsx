@@ -21,7 +21,8 @@ function Results({ level, resultData, quizScore, onDone }) {
         body: JSON.stringify({
           drawing: resultData.drawing,
           theme: resultData.theme,
-          mannequin: resultData.mannequin
+          mannequin: resultData.mannequin,
+          outfitItems: resultData.outfitItems || []
         })
       })
 
