@@ -85,7 +85,12 @@ function Results({ level, resultData, quizScore, onDone }) {
         </div>
       ) : (
         <div className="results-content">
-          <h2 className="bubble-text results-heading">Results!</h2>
+          <div className="results-header-row">
+            <h2 className="bubble-text results-heading">Results!</h2>
+            <button className="results-continue" onClick={() => onDone(isPerfect ? 4 : stars)}>
+              Continue →
+            </button>
+          </div>
 
           <div className="results-images">
             <div className="result-card" onClick={() => setLightbox(resultData.drawing)}>
@@ -127,10 +132,6 @@ function Results({ level, resultData, quizScore, onDone }) {
           <div className="score-verdict">{getLabel()}</div>
 
           {feedback && <p className="ai-feedback">{feedback}</p>}
-
-          <button className="results-continue" onClick={() => onDone(isPerfect ? 4 : stars)}>
-            Continue →
-          </button>
         </div>
       )}
 

@@ -57,6 +57,14 @@
   to { transform: scale(1); opacity: 1; }
 }
 
+.results-header-row {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  width: 100%;
+  justify-content: center;
+}
+
 .results-heading {
   color: white;
   font-size: 26px;
