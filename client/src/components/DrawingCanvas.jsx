@@ -3,11 +3,29 @@ import './DrawingCanvas.css'
 import { levels } from '../data/levels'
 import ColorWheel from './ColorWheel'
 import classicMannequin from '../assets/classic.png'
+import almondMannequin from '../assets/almond.png'
+import bronzeMannequin from '../assets/bronze.png'
+import caramelMannequin from '../assets/caramel.png'
+import cocoaMannequin from '../assets/cocoa.png'
+import goldenMannequin from '../assets/golden.png'
+import honeyMannequin from '../assets/honey.png'
+import ivoryMannequin from '../assets/ivory.png'
+import mochaMannequin from '../assets/mocha.png'
+import roseMannequin from '../assets/rose.png'
 
 const CANVAS_SIZE = 800
 
 const MANNEQUINS = [
   { id: 0, name: 'Classic', src: classicMannequin },
+  { id: 1, name: 'Almond', src: almondMannequin },
+  { id: 2, name: 'Bronze', src: bronzeMannequin },
+  { id: 3, name: 'Caramel', src: caramelMannequin },
+  { id: 4, name: 'Cocoa', src: cocoaMannequin },
+  { id: 5, name: 'Golden', src: goldenMannequin },
+  { id: 6, name: 'Honey', src: honeyMannequin },
+  { id: 7, name: 'Ivory', src: ivoryMannequin },
+  { id: 8, name: 'Mocha', src: mochaMannequin },
+  { id: 9, name: 'Rose', src: roseMannequin },
 ]
 
 
@@ -370,12 +388,30 @@ function DrawingCanvas({ level, onComplete, onBack }) {
     }
   }
 
-  // ── Auto-select the only mannequin ──
-  useEffect(() => {
-    if (selectedMannequin === null) {
-      setSelectedMannequin(0)
-    }
-  }, [selectedMannequin])
+  // ── Mannequin selection screen ──
+  if (selectedMannequin === null) {
+    return (
+      <div className="drawing-screen mannequin-select-screen">
+        <button className="back-btn drawing-back" onClick={onBack}>← Back</button>
+        <h2 className="bubble-text mannequin-select-title">👗 Choose Your Mannequin</h2>
+        <p className="mannequin-select-subtitle">Pick a skin tone for your model</p>
+        <div className="mannequin-grid">
+          {MANNEQUINS.map((m) => (
+            <button
+              key={m.id}
+              className="mannequin-option"
+              onClick={() => setSelectedMannequin(m.id)}
+            >
+              <div className="mannequin-preview">
+                <img src={m.src} alt={m.name} className="mannequin-thumb" />
+              </div>
+              <span className="mannequin-name">{m.name}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    )
+  }
 
   // ── Drawing screen ──
   return (

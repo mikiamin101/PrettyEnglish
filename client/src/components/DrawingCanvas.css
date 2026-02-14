@@ -31,45 +31,74 @@
 }
 
 /* ── Mannequin Selection ── */
+.mannequin-select-screen {
+  justify-content: flex-start;
+  padding-top: 15px;
+  overflow-y: auto;
+}
+
 .mannequin-select-title {
-  font-size: 30px;
-  margin-bottom: 20px;
+  font-size: 28px;
+  margin-bottom: 4px;
+  margin-top: 5px;
+}
+
+.mannequin-select-subtitle {
+  font-family: 'Rubik', sans-serif;
+  font-size: 14px;
+  color: #6B4226;
+  margin-bottom: 12px;
+  opacity: 0.8;
 }
 
 .mannequin-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 14px;
+  gap: 12px;
   justify-content: center;
-  max-width: 650px;
+  max-width: 850px;
+  padding-bottom: 20px;
 }
 
 .mannequin-option {
-  background: white;
+  background: linear-gradient(180deg, #ffffff 0%, #f8f0e6 100%);
   border: 3px solid #e0d5c8;
   border-radius: 14px;
-  padding: 10px;
+  padding: 8px 10px;
   cursor: pointer;
   transition: all 0.25s;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
+  width: 80px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
 .mannequin-option:hover {
   border-color: #FF6B6B;
-  transform: scale(1.08);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+  transform: translateY(-4px) scale(1.06);
+  box-shadow: 0 6px 18px rgba(255, 107, 107, 0.25);
+}
+
+.mannequin-option:active {
+  transform: translateY(-1px) scale(1.02);
 }
 
 .mannequin-preview {
-  width: 55px;
-  height: 70px;
+  width: 60px;
+  height: 90px;
   border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+}
+
+.mannequin-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .mannequin-emoji {
@@ -78,10 +107,11 @@
 }
 
 .mannequin-name {
-  font-family: 'Rubik', sans-serif;
+  font-family: 'Fredoka One', cursive;
   font-size: 11px;
   color: #6B4226;
   font-weight: 500;
+  text-transform: capitalize;
 }
 
 /* ── Drawing Layout ── */
