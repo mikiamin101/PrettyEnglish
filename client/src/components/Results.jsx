@@ -96,7 +96,13 @@ function Results({ level, resultData, quizScore, onDone }) {
 
             <div className="result-card" onClick={() => setLightbox(aiImage || resultData.drawing)}>
               <h3 className="card-label">AI Version ✨</h3>
-              <img src={aiImage || resultData.drawing} alt="AI generated" className="result-img" />
+              <img 
+                src={aiImage || resultData.drawing} 
+                alt="AI generated" 
+                className="result-img"
+                onLoad={() => console.log('AI IMAGE LOADED OK in DOM')}
+                onError={(e) => console.error('AI IMAGE FAILED TO LOAD', e.target.src?.substring(0, 80))}
+              />
             </div>
           </div>
 

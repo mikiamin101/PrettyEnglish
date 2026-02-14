@@ -26,7 +26,7 @@ router.post('/process', async (req, res) => {
       formData.append('prompt', `Transform this fashion sketch into a realistic photograph: a fashion model walking on a runway stage, facing the camera, full front view, wearing the exact outfit shown in this drawing. Theme: ${theme}. Catwalk fashion show, studio lighting, high quality, elegant, full body shot, fashion week style.`)
       formData.append('model', 'dall-e-2')
       formData.append('n', '1')
-      formData.append('size', '1024x1024')
+      formData.append('size', '512x512')
       formData.append('response_format', 'b64_json')
 
       const editResponse = await fetch('https://api.openai.com/v1/images/edits', {
