@@ -66,7 +66,7 @@ Theme: "${theme}". Respond with ONLY a JSON object: {"description": "<detailed o
         },
         body: JSON.stringify({
           model: 'dall-e-3',
-          prompt: `Professional fashion photography of a model wearing: ${outfitDescription}. Theme: ${theme}. Studio lighting, high quality, elegant, full body shot, fashion magazine style.`,
+          prompt: `A fashion model walking on a runway stage, facing directly toward the camera, full front view, wearing: ${outfitDescription}. Theme: ${theme}. Catwalk fashion show, studio lighting, high quality, elegant, full body shot, audience in background, fashion week style.`,
           n: 1,
           size: '1024x1024',
           quality: 'standard',
@@ -100,13 +100,18 @@ Theme: "${theme}". Respond with ONLY a JSON object: {"description": "<detailed o
           messages: [
             {
               role: 'system',
-              content: `You are a fashion judge in a fun game for someone learning English. Rate the outfit on a scale of 7 to 10 based on:
+              content: `You are a fashion judge in a fun game for someone learning English. Rate the outfit on a scale of 1 to 10 based on:
 1. How well it fits the theme "${theme}"
 2. Creativity and originality  
 3. Overall aesthetic appeal
 
-Be encouraging and kind — this is a gift for someone's girlfriend! 
-Respond with ONLY a JSON object: {"score": <number between 7 and 10, can use one decimal>, "feedback": "<brief encouraging feedback in English, 1-2 sentences>"}`
+Scoring guidelines:
+- Aim to give high scores (7-10) when the design shows effort and fits the theme reasonably well.
+- Give medium scores (4-6) if the design is mediocre or only loosely fits the theme.
+- Give low scores (1-3) ONLY if the design is truly terrible, makes no sense, or completely ignores the theme.
+- Be encouraging in your feedback — push the player to do even better next time!
+
+Respond with ONLY a JSON object: {"score": <number between 1 and 10, can use one decimal>, "feedback": "<brief encouraging feedback in English, 1-2 sentences>"}`
             },
             {
               role: 'user',
