@@ -27,14 +27,19 @@ function Results({ level, resultData, quizScore, onDone }) {
 
       if (response.ok) {
         const data = await response.json()
+        console.log('AI response received, image length:', data.generatedImage?.length)
+        console.log('Image starts with:', data.generatedImage?.substring(0, 50))
+        console.log('Score:', data.score, 'Feedback:', data.feedback)
         setAiImage(data.generatedImage)
         setScore(data.score)
         setFeedback(data.feedback || '')
         setLoading(false)
       } else {
+        console.error('AI response not ok:', response.status)
         simulateResults()
       }
-    } catch {
+    } catch (err) {
+      console.error('AI fetch error:', err)
       simulateResults()
     }
   }

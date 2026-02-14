@@ -27,7 +27,7 @@ router.post('/process', async (req, res) => {
       formData.append('model', 'dall-e-2')
       formData.append('n', '1')
       formData.append('size', '1024x1024')
-      formData.append('response_format', 'url')
+      formData.append('response_format', 'b64_json')
 
       const editResponse = await fetch('https://api.openai.com/v1/images/edits', {
         method: 'POST',
@@ -39,9 +39,9 @@ router.post('/process', async (req, res) => {
 
       if (editResponse.ok) {
         const editData = await editResponse.json()
-        if (editData.data?.[0]?.url) {
-          generatedImage = editData.data[0].url
-          console.log('DALL-E 2 image-to-image success! URL:', generatedImage.substring(0, 80) + '...')
+        if (editData.data?.[0]?.b64_json) {
+          generatedImage = `data:image/png;base64,${editData.data[0].b64_json}`
+          console.log('DALL-E 2 success! Generated image length:', generatedImage.length)
         }
       } else {
         const errText = await editResponse.text()
@@ -105,12 +105,15 @@ Respond with ONLY a JSON object: {"score": <number between 1 and 10, can use one
       console.error('Scoring error:', err.message)
     }
 
-    res.json({
+    const responsePayload = {
       generatedImage,
       score,
       feedback,
       theme
-    })
+    }
+    console.log('Response payload size:', JSON.stringify(responsePayload).length, 'bytes')
+    console.log('Generated image is original?', generatedImage === drawing)
+    res.json(responsePayload)
   } catch (err) {
     console.error('AI processing error:', err)
     res.status(500).json({ error: 'AI processing failed' })
