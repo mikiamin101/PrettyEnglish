@@ -14,59 +14,94 @@ router.post('/process', async (req, res) => {
       return res.json({ generatedImage, score, feedback, theme })
     }
 
-    // ── Step 1: True image-to-image with DALL-E 2 ──
+    // ── Step 1: GPT-4o Vision describes the outfit ──
+    let outfitDescription = ''
     try {
-      console.log('Step 1: Sending drawing to DALL-E 2 for image-to-image...')
-      const base64Data = drawing.replace(/^data:image\/\w+;base64,/, '')
-      const imageBuffer = Buffer.from(base64Data, 'base64')
-
-      const formData = new FormData()
-      const imageBlob = new Blob([imageBuffer], { type: 'image/png' })
-      formData.append('image', imageBlob, 'drawing.png')
-      formData.append('prompt', `Transform this fashion sketch into a realistic photograph: a fashion model walking on a runway stage, facing the camera, full front view, wearing the exact outfit shown in this drawing. Theme: ${theme}. Catwalk fashion show, studio lighting, high quality, elegant, full body shot, fashion week style.`)
-      formData.append('model', 'dall-e-2')
-      formData.append('n', '1')
-      formData.append('size', '512x512')
-      formData.append('response_format', 'b64_json')
-
-      const editResponse = await fetch('https://api.openai.com/v1/images/edits', {
+      console.log('Step 1: GPT-4o describing the drawing...')
+      const descResponse = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+          'Content-Type': 'application/json'
         },
-        body: formData
+        body: JSON.stringify({
+          model: 'gpt-4o',
+          messages: [
+            {
+              role: 'user',
+              content: [
+                {
+                  type: 'text',
+                  text: `Look at this fashion sketch drawn by a player. Describe ONLY the outfit/clothing in detail: the garment types (dress, pants, shirt, skirt, etc.), colors, patterns, accessories, and style. Be very specific about colors and design details. Do NOT mention the mannequin, canvas, or background. Keep it to 2-3 sentences. Theme: "${theme}".`
+                },
+                { type: 'image_url', image_url: { url: drawing } }
+              ]
+            }
+          ],
+          max_tokens: 200
+        })
       })
 
-      if (editResponse.ok) {
-        const editData = await editResponse.json()
-        const item = editData.data?.[0]
-        console.log('DALL-E 2 response keys:', item ? Object.keys(item) : 'no data')
-
-        if (item?.b64_json) {
-          // Got base64 directly — perfect
-          generatedImage = `data:image/png;base64,${item.b64_json}`
-          console.log('DALL-E 2 success (b64)! Image length:', generatedImage.length)
-        } else if (item?.url) {
-          // Got a URL — download server-side and convert to base64
-          console.log('DALL-E 2 returned URL, downloading server-side...')
-          const imgResponse = await fetch(item.url)
-          if (imgResponse.ok) {
-            const imgArrayBuffer = await imgResponse.arrayBuffer()
-            const imgBase64 = Buffer.from(imgArrayBuffer).toString('base64')
-            generatedImage = `data:image/png;base64,${imgBase64}`
-            console.log('Downloaded & converted! Image length:', generatedImage.length)
-          } else {
-            console.error('Failed to download DALL-E URL:', imgResponse.status, await imgResponse.text())
-          }
-        } else {
-          console.error('DALL-E 2 response has no b64_json or url:', JSON.stringify(editData).substring(0, 500))
-        }
+      if (descResponse.ok) {
+        const descData = await descResponse.json()
+        outfitDescription = descData.choices[0].message.content
+        console.log('Outfit description:', outfitDescription)
       } else {
-        const errText = await editResponse.text()
-        console.error('DALL-E 2 edit error:', editResponse.status, errText)
+        console.error('Description error:', descResponse.status, await descResponse.text())
       }
     } catch (err) {
-      console.error('Image generation error:', err.message)
+      console.error('Description error:', err.message)
+    }
+
+    // ── Step 2: DALL-E 3 generates a realistic photo from the description ──
+    if (outfitDescription) {
+      try {
+        console.log('Step 2: DALL-E 3 generating realistic photo...')
+        const imagePrompt = `A professional fashion photograph of a model on a runway catwalk, facing the camera, full body shot, wearing this outfit: ${outfitDescription}. Theme: ${theme}. Fashion week style, studio lighting, high quality, elegant, photorealistic.`
+
+        const genResponse = await fetch('https://api.openai.com/v1/images/generations', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            model: 'dall-e-3',
+            prompt: imagePrompt,
+            n: 1,
+            size: '1024x1024',
+            quality: 'standard',
+            response_format: 'b64_json'
+          })
+        })
+
+        if (genResponse.ok) {
+          const genData = await genResponse.json()
+          const item = genData.data?.[0]
+
+          if (item?.b64_json) {
+            generatedImage = `data:image/png;base64,${item.b64_json}`
+            console.log('DALL-E 3 success (b64)! Image length:', generatedImage.length)
+          } else if (item?.url) {
+            // Fallback: download URL server-side
+            console.log('DALL-E 3 returned URL, downloading server-side...')
+            const imgResponse = await fetch(item.url)
+            if (imgResponse.ok) {
+              const imgArrayBuffer = await imgResponse.arrayBuffer()
+              const imgBase64 = Buffer.from(imgArrayBuffer).toString('base64')
+              generatedImage = `data:image/png;base64,${imgBase64}`
+              console.log('Downloaded & converted! Image length:', generatedImage.length)
+            } else {
+              console.error('Failed to download DALL-E URL:', imgResponse.status)
+            }
+          }
+        } else {
+          const errText = await genResponse.text()
+          console.error('DALL-E 3 generation error:', genResponse.status, errText)
+        }
+      } catch (err) {
+        console.error('Image generation error:', err.message)
+      }
     }
 
     // ── Step 2: Score the generated image with GPT-4o Vision ──
