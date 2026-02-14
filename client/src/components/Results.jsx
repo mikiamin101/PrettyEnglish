@@ -6,6 +6,7 @@ function Results({ level, resultData, quizScore, onDone }) {
   const [score, setScore] = useState(null)
   const [feedback, setFeedback] = useState('')
   const [loading, setLoading] = useState(true)
+  const [lightbox, setLightbox] = useState(null)
 
   useEffect(() => {
     processWithAI()
@@ -81,14 +82,14 @@ function Results({ level, resultData, quizScore, onDone }) {
           <h2 className="bubble-text results-heading">Results!</h2>
 
           <div className="results-images">
-            <div className="result-card">
+            <div className="result-card" onClick={() => setLightbox(resultData.drawing)}>
               <h3 className="card-label">Your Design ✏️</h3>
               <img src={resultData.drawing} alt="Your drawing" className="result-img" />
             </div>
 
             <div className="results-arrow-icon">→</div>
 
-            <div className="result-card">
+            <div className="result-card" onClick={() => setLightbox(aiImage || resultData.drawing)}>
               <h3 className="card-label">AI Version ✨</h3>
               <img src={aiImage || resultData.drawing} alt="AI generated" className="result-img" />
             </div>
@@ -118,6 +119,13 @@ function Results({ level, resultData, quizScore, onDone }) {
           <button className="results-continue" onClick={() => onDone(isPerfect ? 4 : stars)}>
             Continue →
           </button>
+        </div>
+      )}
+
+      {lightbox && (
+        <div className="lightbox-overlay" onClick={() => setLightbox(null)}>
+          <img src={lightbox} alt="Full size" className="lightbox-img" />
+          <span className="lightbox-close">✕</span>
         </div>
       )}
     </div>

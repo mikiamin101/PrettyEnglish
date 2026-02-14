@@ -154,6 +154,14 @@
   touch-action: none;
 }
 
+.canvas-draw.canvas-panning {
+  cursor: grab;
+}
+
+.canvas-draw.canvas-panning:active {
+  cursor: grabbing;
+}
+
 .zoom-badge {
   position: absolute;
   bottom: 6px;

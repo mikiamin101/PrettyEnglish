@@ -14,82 +14,38 @@ router.post('/process', async (req, res) => {
       return res.json({ generatedImage, score, feedback, theme })
     }
 
-    // ── Step 1: Generate fashion image with GPT-4o (image input → image output) ──
+    // ── Step 1: True image-to-image with DALL-E 2 ──
     try {
-      console.log('Step 1: Sending drawing to GPT-4o for description...')
-      console.log('Drawing data length:', drawing.length)
-      const generateResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+      console.log('Step 1: Sending drawing to DALL-E 2 for image-to-image...')
+      const base64Data = drawing.replace(/^data:image\/\w+;base64,/, '')
+      const imageBuffer = Buffer.from(base64Data, 'base64')
+
+      const formData = new FormData()
+      const imageBlob = new Blob([imageBuffer], { type: 'image/png' })
+      formData.append('image', imageBlob, 'drawing.png')
+      formData.append('prompt', `Transform this fashion sketch into a realistic photograph: a fashion model walking on a runway stage, facing the camera, full front view, wearing the exact outfit shown in this drawing. Theme: ${theme}. Catwalk fashion show, studio lighting, high quality, elegant, full body shot, fashion week style.`)
+      formData.append('model', 'dall-e-2')
+      formData.append('n', '1')
+      formData.append('size', '1024x1024')
+      formData.append('response_format', 'b64_json')
+
+      const editResponse = await fetch('https://api.openai.com/v1/images/edits', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-          'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          model: 'gpt-4o',
-          messages: [
-            {
-              role: 'system',
-              content: `You are a fashion design AI. The user will send you a sketch/drawing of an outfit on a mannequin. 
-Your task is to describe this outfit in vivid detail so it can be used to generate a realistic fashion image.
-Describe: colors, garment types, patterns, accessories, style, and overall aesthetic.
-Theme: "${theme}". Respond with ONLY a JSON object: {"description": "<detailed outfit description>"}`
-            },
-            {
-              role: 'user',
-              content: [
-                { type: 'text', text: `Describe this ${theme} outfit sketch in detail:` },
-                { type: 'image_url', image_url: { url: drawing } }
-              ]
-            }
-          ],
-          max_tokens: 300
-        })
+        body: formData
       })
 
-      let outfitDescription = `A stylish ${theme} outfit`
-
-      if (generateResponse.ok) {
-        const descData = await generateResponse.json()
-        const descContent = descData.choices[0].message.content
-        console.log('GPT-4o description response:', descContent)
-        try {
-          const parsed = JSON.parse(descContent)
-          outfitDescription = parsed.description
-        } catch {
-          outfitDescription = descContent
+      if (editResponse.ok) {
+        const editData = await editResponse.json()
+        if (editData.data?.[0]?.b64_json) {
+          generatedImage = `data:image/png;base64,${editData.data[0].b64_json}`
+          console.log('DALL-E 2 image-to-image success!')
         }
       } else {
-        const descErr = await generateResponse.text()
-        console.error('GPT-4o description error:', generateResponse.status, descErr)
-      }
-
-      // Now generate the actual image with DALL-E 3
-      console.log('Step 2: Generating image with DALL-E 3...')
-      console.log('Prompt:', `A fashion model walking on a runway...${outfitDescription.substring(0, 100)}...`)
-      const dalleResponse = await fetch('https://api.openai.com/v1/images/generations', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          model: 'dall-e-3',
-          prompt: `A fashion model walking on a runway stage, facing directly toward the camera, full front view, wearing: ${outfitDescription}. Theme: ${theme}. Catwalk fashion show, studio lighting, high quality, elegant, full body shot, audience in background, fashion week style.`,
-          n: 1,
-          size: '1024x1024',
-          quality: 'standard',
-          response_format: 'b64_json'
-        })
-      })
-
-      if (dalleResponse.ok) {
-        const dalleData = await dalleResponse.json()
-        if (dalleData.data?.[0]?.b64_json) {
-          generatedImage = `data:image/png;base64,${dalleData.data[0].b64_json}`
-        }
-      } else {
-        const errText = await dalleResponse.text()
-        console.error('DALL-E error:', dalleResponse.status, errText)
+        const errText = await editResponse.text()
+        console.error('DALL-E 2 edit error:', editResponse.status, errText)
       }
     } catch (err) {
       console.error('Image generation error:', err.message)

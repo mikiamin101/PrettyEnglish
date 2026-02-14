@@ -145,7 +145,14 @@ export default function ColorWheel({ color, onChange }) {
       const angle = Math.atan2(pos.y - cy, pos.x - cx) * 180 / Math.PI
       const newHue = (angle + 360) % 360
       setHue(newHue)
-      const [r, g, b] = hsvToRgb(newHue, sat, val)
+      // When picking from hue ring, ensure saturation & value are high enough to see the color
+      let newSat = sat
+      let newVal = val
+      if (sat < 0.3) newSat = 0.8
+      if (val < 0.3) newVal = 0.9
+      setSat(newSat)
+      setVal(newVal)
+      const [r, g, b] = hsvToRgb(newHue, newSat, newVal)
       onChange(rgbToHex(r, g, b))
     } else if (target === 'square') {
       const newSat = Math.max(0, Math.min(1, (pos.x - SQ_OFFSET) / (SQ_SIZE - 1)))
@@ -209,6 +216,7 @@ export default function ColorWheel({ color, onChange }) {
       width={SIZE}
       height={SIZE}
       className="color-wheel-canvas"
+      style={{ touchAction: 'none' }}
       onMouseDown={handleDown}
       onMouseMove={handleMove}
       onMouseUp={handleUp}

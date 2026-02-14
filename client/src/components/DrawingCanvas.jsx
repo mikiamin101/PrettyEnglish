@@ -142,6 +142,12 @@ function DrawingCanvas({ level, onComplete, onBack }) {
       startPan(e.clientX, e.clientY)
       return
     }
+    // When zoomed, single click = pan instead of draw
+    if (zoom > 1) {
+      e.preventDefault()
+      startPan(e.clientX, e.clientY)
+      return
+    }
     startDrawing(e)
   }
 
@@ -169,6 +175,12 @@ function DrawingCanvas({ level, onComplete, onBack }) {
       const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2
       const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2
       startPan(midX, midY)
+      return
+    }
+    // When zoomed, single finger = pan instead of draw
+    if (zoom > 1) {
+      e.preventDefault()
+      startPan(e.touches[0].clientX, e.touches[0].clientY)
       return
     }
     startDrawing(e)
@@ -412,7 +424,7 @@ function DrawingCanvas({ level, onComplete, onBack }) {
             />
             <canvas
               ref={drawCanvasRef}
-              className="canvas-draw"
+              className={`canvas-draw ${zoom > 1 ? 'canvas-panning' : ''}`}
               width={CANVAS_SIZE}
               height={CANVAS_SIZE}
               onMouseDown={handleCanvasMouseDown}
