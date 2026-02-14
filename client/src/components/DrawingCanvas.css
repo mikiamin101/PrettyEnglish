@@ -127,6 +127,13 @@
   height: min(82vh, 400px);
 }
 
+.canvas-zoom-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.1s ease-out;
+}
+
 .canvas-bg,
 .canvas-draw {
   position: absolute;
@@ -145,6 +152,20 @@
   z-index: 2;
   cursor: crosshair;
   touch-action: none;
+}
+
+.zoom-badge {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  background: rgba(0, 0, 0, 0.55);
+  color: white;
+  font-family: 'Fredoka One', cursive;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 8px;
+  z-index: 10;
+  pointer-events: none;
 }
 
 /* ── Tools Panel ── */

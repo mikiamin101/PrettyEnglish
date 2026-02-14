@@ -23,7 +23,12 @@ function DrawingCanvas({ level, onComplete, onBack }) {
   const [tool, setTool] = useState('brush')
   const [history, setHistory] = useState([])
   const [selectedMannequin, setSelectedMannequin] = useState(null)
+  const [zoom, setZoom] = useState(1)
+  const [pan, setPan] = useState({ x: 0, y: 0 })
+  const [isPanning, setIsPanning] = useState(false)
+  const panStartRef = useRef(null)
   const lastPosRef = useRef(null)
+  const wrapperRef = useRef(null)
 
   const drawMannequin = useCallback((ctx, mannequinId) => {
     const mannequin = MANNEQUINS[mannequinId] || MANNEQUINS[0]
@@ -82,6 +87,120 @@ function DrawingCanvas({ level, onComplete, onBack }) {
       x: (e.clientX - rect.left) * scaleX,
       y: (e.clientY - rect.top) * scaleY
     }
+  }
+
+  // ── Zoom with scroll wheel ──
+  const handleWheel = useCallback((e) => {
+    e.preventDefault()
+    const delta = e.deltaY > 0 ? -0.15 : 0.15
+    setZoom(prev => Math.min(5, Math.max(1, prev + delta)))
+  }, [])
+
+  useEffect(() => {
+    const wrapper = wrapperRef.current
+    if (wrapper) {
+      wrapper.addEventListener('wheel', handleWheel, { passive: false })
+      return () => wrapper.removeEventListener('wheel', handleWheel)
+    }
+  }, [handleWheel])
+
+  // Reset pan when zoom goes back to 1
+  useEffect(() => {
+    if (zoom <= 1) setPan({ x: 0, y: 0 })
+  }, [zoom])
+
+  const handleZoomIn = () => setZoom(prev => Math.min(5, prev + 0.5))
+  const handleZoomOut = () => {
+    setZoom(prev => {
+      const next = Math.max(1, prev - 0.5)
+      if (next <= 1) setPan({ x: 0, y: 0 })
+      return next
+    })
+  }
+  const handleZoomReset = () => { setZoom(1); setPan({ x: 0, y: 0 }) }
+
+  // ── Pan with middle mouse or two-finger drag ──
+  const startPan = (clientX, clientY) => {
+    setIsPanning(true)
+    panStartRef.current = { x: clientX - pan.x, y: clientY - pan.y }
+  }
+  const movePan = (clientX, clientY) => {
+    if (!isPanning || !panStartRef.current) return
+    const wrapper = wrapperRef.current
+    if (!wrapper) return
+    const maxPan = (zoom - 1) * wrapper.offsetWidth / 2
+    const newX = Math.min(maxPan, Math.max(-maxPan, clientX - panStartRef.current.x))
+    const newY = Math.min(maxPan, Math.max(-maxPan, clientY - panStartRef.current.y))
+    setPan({ x: newX, y: newY })
+  }
+  const stopPan = () => { setIsPanning(false); panStartRef.current = null }
+
+  const handleCanvasMouseDown = (e) => {
+    // Middle mouse button = pan
+    if (e.button === 1) {
+      e.preventDefault()
+      startPan(e.clientX, e.clientY)
+      return
+    }
+    startDrawing(e)
+  }
+
+  const handleCanvasMouseMove = (e) => {
+    if (isPanning) {
+      movePan(e.clientX, e.clientY)
+      return
+    }
+    draw(e)
+  }
+
+  const handleCanvasMouseUp = (e) => {
+    if (isPanning) { stopPan(); return }
+    stopDrawing()
+  }
+
+  // Two-finger touch for pan (when zoomed)
+  const lastTouchDistRef = useRef(null)
+  const handleCanvasTouchStart = (e) => {
+    if (e.touches.length === 2) {
+      e.preventDefault()
+      const dx = e.touches[0].clientX - e.touches[1].clientX
+      const dy = e.touches[0].clientY - e.touches[1].clientY
+      lastTouchDistRef.current = Math.sqrt(dx * dx + dy * dy)
+      const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2
+      const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2
+      startPan(midX, midY)
+      return
+    }
+    startDrawing(e)
+  }
+
+  const handleCanvasTouchMove = (e) => {
+    if (e.touches.length === 2) {
+      e.preventDefault()
+      // Pinch to zoom
+      const dx = e.touches[0].clientX - e.touches[1].clientX
+      const dy = e.touches[0].clientY - e.touches[1].clientY
+      const dist = Math.sqrt(dx * dx + dy * dy)
+      if (lastTouchDistRef.current) {
+        const scale = dist / lastTouchDistRef.current
+        setZoom(prev => Math.min(5, Math.max(1, prev * scale)))
+        lastTouchDistRef.current = dist
+      }
+      // Pan
+      const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2
+      const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2
+      movePan(midX, midY)
+      return
+    }
+    draw(e)
+  }
+
+  const handleCanvasTouchEnd = (e) => {
+    if (e.touches.length < 2) {
+      lastTouchDistRef.current = null
+      stopPan()
+    }
+    if (e.touches.length === 0) stopDrawing()
   }
 
   // ── Flood Fill (paint bucket) ──
@@ -277,26 +396,37 @@ function DrawingCanvas({ level, onComplete, onBack }) {
         </div>
 
         {/* Canvas — two layers stacked */}
-        <div className="canvas-wrapper">
-          <canvas
-            ref={bgCanvasRef}
-            className="canvas-bg"
-            width={CANVAS_SIZE}
-            height={CANVAS_SIZE}
-          />
-          <canvas
-            ref={drawCanvasRef}
-            className="canvas-draw"
-            width={CANVAS_SIZE}
-            height={CANVAS_SIZE}
-            onMouseDown={startDrawing}
-            onMouseMove={draw}
-            onMouseUp={stopDrawing}
-            onMouseLeave={stopDrawing}
-            onTouchStart={startDrawing}
-            onTouchMove={draw}
-            onTouchEnd={stopDrawing}
-          />
+        <div className="canvas-wrapper" ref={wrapperRef}>
+          <div
+            className="canvas-zoom-container"
+            style={{
+              transform: `scale(${zoom}) translate(${pan.x / zoom}px, ${pan.y / zoom}px)`,
+              transformOrigin: 'center center'
+            }}
+          >
+            <canvas
+              ref={bgCanvasRef}
+              className="canvas-bg"
+              width={CANVAS_SIZE}
+              height={CANVAS_SIZE}
+            />
+            <canvas
+              ref={drawCanvasRef}
+              className="canvas-draw"
+              width={CANVAS_SIZE}
+              height={CANVAS_SIZE}
+              onMouseDown={handleCanvasMouseDown}
+              onMouseMove={handleCanvasMouseMove}
+              onMouseUp={handleCanvasMouseUp}
+              onMouseLeave={handleCanvasMouseUp}
+              onTouchStart={handleCanvasTouchStart}
+              onTouchMove={handleCanvasTouchMove}
+              onTouchEnd={handleCanvasTouchEnd}
+            />
+          </div>
+          {zoom > 1 && (
+            <div className="zoom-badge">{Math.round(zoom * 100)}%</div>
+          )}
         </div>
 
         {/* Right tools panel */}
@@ -354,10 +484,20 @@ function DrawingCanvas({ level, onComplete, onBack }) {
           <div className="tool-actions">
             <button className="action-btn undo-btn" onClick={handleUndo} title="Undo">↩ Undo</button>
             <button className="action-btn clear-btn" onClick={handleClear} title="Clear">🗑 Clear</button>
-            <button className="action-btn submit-btn-canvas" onClick={handleSubmit}>
-              ✨ Make it Real!
-            </button>
           </div>
+
+          <div className="tool-group">
+            <span className="tool-group-label">Zoom</span>
+            <div className="tool-row">
+              <button className="tool-btn" onClick={handleZoomOut} title="Zoom Out">➖</button>
+              <button className="tool-btn" onClick={handleZoomReset} title="Reset" style={{fontSize:'11px'}}>{Math.round(zoom*100)}%</button>
+              <button className="tool-btn" onClick={handleZoomIn} title="Zoom In">➕</button>
+            </div>
+          </div>
+
+          <button className="action-btn submit-btn-canvas" onClick={handleSubmit}>
+            ✨ Make it Real!
+          </button>
         </div>
       </div>
     </div>
