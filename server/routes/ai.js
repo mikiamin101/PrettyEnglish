@@ -39,9 +39,27 @@ router.post('/process', async (req, res) => {
 
       if (editResponse.ok) {
         const editData = await editResponse.json()
-        if (editData.data?.[0]?.b64_json) {
-          generatedImage = `data:image/png;base64,${editData.data[0].b64_json}`
-          console.log('DALL-E 2 success! Generated image length:', generatedImage.length)
+        const item = editData.data?.[0]
+        console.log('DALL-E 2 response keys:', item ? Object.keys(item) : 'no data')
+
+        if (item?.b64_json) {
+          // Got base64 directly — perfect
+          generatedImage = `data:image/png;base64,${item.b64_json}`
+          console.log('DALL-E 2 success (b64)! Image length:', generatedImage.length)
+        } else if (item?.url) {
+          // Got a URL — download server-side and convert to base64
+          console.log('DALL-E 2 returned URL, downloading server-side...')
+          const imgResponse = await fetch(item.url)
+          if (imgResponse.ok) {
+            const imgArrayBuffer = await imgResponse.arrayBuffer()
+            const imgBase64 = Buffer.from(imgArrayBuffer).toString('base64')
+            generatedImage = `data:image/png;base64,${imgBase64}`
+            console.log('Downloaded & converted! Image length:', generatedImage.length)
+          } else {
+            console.error('Failed to download DALL-E URL:', imgResponse.status, await imgResponse.text())
+          }
+        } else {
+          console.error('DALL-E 2 response has no b64_json or url:', JSON.stringify(editData).substring(0, 500))
         }
       } else {
         const errText = await editResponse.text()
