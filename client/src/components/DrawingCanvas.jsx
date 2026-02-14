@@ -4,7 +4,7 @@ import { levels } from '../data/levels'
 import ColorWheel from './ColorWheel'
 import classicMannequin from '../assets/classic.png'
 
-const CANVAS_SIZE = 400
+const CANVAS_SIZE = 800
 
 const MANNEQUINS = [
   { id: 0, name: 'Classic', src: classicMannequin },
