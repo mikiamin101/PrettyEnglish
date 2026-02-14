@@ -11,6 +11,10 @@ function App() {
   const [screen, setScreen] = useState('landing')
   const [currentLevel, setCurrentLevel] = useState(null)
   const [showAuth, setShowAuth] = useState(false)
+  const [user, setUser] = useState(() => {
+    const saved = localStorage.getItem('prettyEnglishUser')
+    return saved ? JSON.parse(saved) : null
+  })
   const [progress, setProgress] = useState(() => {
     const saved = localStorage.getItem('prettyEnglishProgress')
     return saved ? JSON.parse(saved) : {}
@@ -49,14 +53,25 @@ function App() {
     setScreen('levelSelect')
   }
 
+  const handleLogin = (userData) => {
+    setUser(userData)
+    localStorage.setItem('prettyEnglishUser', JSON.stringify(userData))
+  }
+
+  const handleLogout = () => {
+    setUser(null)
+    localStorage.removeItem('prettyEnglishUser')
+  }
+
   const handleBackToLanding = () => setScreen('landing')
 
   return (
     <div className="app">
-      {showAuth && <Auth onClose={() => setShowAuth(false)} />}
+      {showAuth && <Auth user={user} onLogin={handleLogin} onLogout={handleLogout} onClose={() => setShowAuth(false)} />}
 
       {screen === 'landing' && (
         <Landing
+          user={user}
           onChooseLevel={handleChooseLevel}
           onShowAuth={() => setShowAuth(true)}
         />

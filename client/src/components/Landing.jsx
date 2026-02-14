@@ -16,14 +16,18 @@ const PalmTree = ({ className }) => (
   </svg>
 )
 
-function Landing({ onChooseLevel, onShowAuth }) {
+function Landing({ onChooseLevel, onShowAuth, user }) {
   return (
     <div className="landing">
       {/* Top Bar */}
       <div className="landing-top-bar">
         <div className="love-message hebrew-text">אני אוהב אותך ליאמי 💛</div>
         <button className="auth-button" onClick={onShowAuth}>
-          <span className="auth-icon">👤</span>
+          {user ? (
+            <span className="auth-icon auth-logged-in">👤</span>
+          ) : (
+            <span className="auth-icon">👤</span>
+          )}
         </button>
       </div>
 

@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import './Auth.css'
 
-function Auth({ onClose }) {
+function Auth({ user, onLogin, onLogout, onClose }) {
   const [isLogin, setIsLogin] = useState(true)
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -19,6 +19,7 @@ function Auth({ onClose }) {
       const data = await response.json()
       if (data.success) {
         setMessage(isLogin ? '!התחברת בהצלחה 🎉' : '!נרשמת בהצלחה 🎉')
+        onLogin(data.user)
         setTimeout(onClose, 1500)
       } else {
         setMessage(data.message || 'שגיאה, נסי שוב')
@@ -26,6 +27,30 @@ function Auth({ onClose }) {
     } catch {
       setMessage('🔧 Server not connected yet — coming soon!')
     }
+  }
+
+  const handleLogout = () => {
+    onLogout()
+    onClose()
+  }
+
+  // If already logged in, show profile
+  if (user) {
+    return (
+      <div className="auth-overlay" onClick={onClose}>
+        <div className="auth-modal" onClick={e => e.stopPropagation()}>
+          <button className="auth-close" onClick={onClose}>✕</button>
+          <div className="auth-profile">
+            <div className="auth-avatar">👤</div>
+            <h2 className="bubble-text auth-title">!שלום</h2>
+            <p className="auth-username">{user.username}</p>
+            <button className="auth-logout-btn" onClick={handleLogout}>
+              🚪 Logout
+            </button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (

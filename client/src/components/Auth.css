@@ -112,3 +112,65 @@
 .auth-toggle:hover {
   text-decoration: underline;
 }
+
+/* ── Profile View (logged in) ── */
+.auth-profile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+}
+
+.auth-avatar {
+  font-size: 48px;
+  width: 70px;
+  height: 70px;
+  background: linear-gradient(135deg, #f093fb, #f5576c);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.auth-username {
+  font-family: 'Fredoka One', cursive;
+  font-size: 20px;
+  color: #333;
+  margin: 0;
+}
+
+.auth-logout-btn {
+  font-family: 'Fredoka One', cursive;
+  font-size: 14px;
+  padding: 8px 24px;
+  background: linear-gradient(180deg, #ff6b6b, #ee5a24);
+  color: white;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 3px 10px rgba(238, 90, 36, 0.3);
+}
+
+.auth-logout-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(238, 90, 36, 0.4);
+}
+
+/* ── Logged-in indicator on landing ── */
+.auth-logged-in {
+  position: relative;
+}
+
+.auth-logged-in::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 10px;
+  height: 10px;
+  background: #4CAF50;
+  border-radius: 50%;
+  border: 2px solid white;
+}
