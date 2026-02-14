@@ -5,7 +5,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 15px;
+  padding: 10px;
+  overflow: hidden;
 }
 
 /* ── Loading ── */
@@ -46,8 +47,9 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 6px;
   animation: resultsAppear 0.6s ease;
+  max-height: 100vh;
 }
 
 @keyframes resultsAppear {
@@ -57,8 +59,9 @@
 
 .results-heading {
   color: white;
-  font-size: 34px;
+  font-size: 26px;
   text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.2);
+  margin: 0;
 }
 
 /* ── Image Cards ── */
@@ -84,8 +87,8 @@
 }
 
 .result-img {
-  width: 190px;
-  height: 190px;
+  width: min(22vh, 180px);
+  height: min(22vh, 180px);
   object-fit: contain;
   border-radius: 10px;
   background: #f9f9f9;
@@ -107,7 +110,7 @@
 
 .score-big {
   font-family: 'Fredoka One', cursive;
-  font-size: 52px;
+  font-size: 38px;
   color: white;
   text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.2);
 }
@@ -125,7 +128,7 @@
 }
 
 .result-star {
-  font-size: 38px;
+  font-size: 30px;
   transition: all 0.4s;
 }
 
@@ -146,7 +149,7 @@
 }
 
 .perfect-gem {
-  font-size: 54px;
+  font-size: 40px;
   animation: gemShine 1.5s ease-in-out infinite;
 }
 
@@ -157,7 +160,7 @@
 
 .score-verdict {
   font-family: 'Fredoka One', cursive;
-  font-size: 24px;
+  font-size: 18px;
   color: white;
   text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.2);
 }
@@ -177,8 +180,8 @@
 /* ── Continue ── */
 .results-continue {
   font-family: 'Fredoka One', cursive;
-  font-size: 20px;
-  padding: 12px 36px;
+  font-size: 16px;
+  padding: 8px 28px;
   background: linear-gradient(180deg, #FFD93D, #FFCC02);
   color: #6B4226;
   border: 3px solid #D4A373;

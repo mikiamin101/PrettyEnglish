@@ -16,6 +16,8 @@ router.post('/process', async (req, res) => {
 
     // ── Step 1: Generate fashion image with GPT-4o (image input → image output) ──
     try {
+      console.log('Step 1: Sending drawing to GPT-4o for description...')
+      console.log('Drawing data length:', drawing.length)
       const generateResponse = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -49,15 +51,21 @@ Theme: "${theme}". Respond with ONLY a JSON object: {"description": "<detailed o
       if (generateResponse.ok) {
         const descData = await generateResponse.json()
         const descContent = descData.choices[0].message.content
+        console.log('GPT-4o description response:', descContent)
         try {
           const parsed = JSON.parse(descContent)
           outfitDescription = parsed.description
         } catch {
           outfitDescription = descContent
         }
+      } else {
+        const descErr = await generateResponse.text()
+        console.error('GPT-4o description error:', generateResponse.status, descErr)
       }
 
       // Now generate the actual image with DALL-E 3
+      console.log('Step 2: Generating image with DALL-E 3...')
+      console.log('Prompt:', `A fashion model walking on a runway...${outfitDescription.substring(0, 100)}...`)
       const dalleResponse = await fetch('https://api.openai.com/v1/images/generations', {
         method: 'POST',
         headers: {
