@@ -158,6 +158,7 @@ function Quiz({ level, onComplete, onBack }) {
             className="answer-input hebrew-text"
             value={answer}
             onChange={(e) => setAnswer(e.target.value)}
+            onFocus={(e) => setTimeout(() => e.target.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300)}
             placeholder="...הקלידי את התרגום"
             dir="rtl"
             disabled={showNext}
