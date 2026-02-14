@@ -27,7 +27,7 @@ router.post('/process', async (req, res) => {
       formData.append('model', 'dall-e-2')
       formData.append('n', '1')
       formData.append('size', '1024x1024')
-      formData.append('response_format', 'b64_json')
+      formData.append('response_format', 'url')
 
       const editResponse = await fetch('https://api.openai.com/v1/images/edits', {
         method: 'POST',
@@ -39,9 +39,9 @@ router.post('/process', async (req, res) => {
 
       if (editResponse.ok) {
         const editData = await editResponse.json()
-        if (editData.data?.[0]?.b64_json) {
-          generatedImage = `data:image/png;base64,${editData.data[0].b64_json}`
-          console.log('DALL-E 2 image-to-image success!')
+        if (editData.data?.[0]?.url) {
+          generatedImage = editData.data[0].url
+          console.log('DALL-E 2 image-to-image success! URL:', generatedImage.substring(0, 80) + '...')
         }
       } else {
         const errText = await editResponse.text()
