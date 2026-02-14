@@ -84,10 +84,69 @@ function DrawingCanvas({ level, onComplete, onBack }) {
     }
   }
 
+  // ── Flood Fill (paint bucket) ──
+  const floodFill = useCallback((startX, startY, fillColor) => {
+    const canvas = drawCanvasRef.current
+    const ctx = canvas.getContext('2d')
+    const imageData = ctx.getImageData(0, 0, CANVAS_SIZE, CANVAS_SIZE)
+    const data = imageData.data
+    const sx = Math.round(startX)
+    const sy = Math.round(startY)
+
+    // Parse fill color
+    const tempCanvas = document.createElement('canvas')
+    tempCanvas.width = 1; tempCanvas.height = 1
+    const tempCtx = tempCanvas.getContext('2d')
+    tempCtx.fillStyle = fillColor
+    tempCtx.fillRect(0, 0, 1, 1)
+    const fc = tempCtx.getImageData(0, 0, 1, 1).data
+
+    const idx = (sy * CANVAS_SIZE + sx) * 4
+    const targetR = data[idx], targetG = data[idx + 1], targetB = data[idx + 2], targetA = data[idx + 3]
+
+    // Don't fill if clicking on the same color
+    if (targetR === fc[0] && targetG === fc[1] && targetB === fc[2] && targetA === fc[3]) return
+
+    const tolerance = 32
+    const match = (i) => {
+      return Math.abs(data[i] - targetR) <= tolerance &&
+             Math.abs(data[i + 1] - targetG) <= tolerance &&
+             Math.abs(data[i + 2] - targetB) <= tolerance &&
+             Math.abs(data[i + 3] - targetA) <= tolerance
+    }
+
+    const stack = [[sx, sy]]
+    const visited = new Uint8Array(CANVAS_SIZE * CANVAS_SIZE)
+
+    while (stack.length > 0) {
+      const [x, y] = stack.pop()
+      const pi = y * CANVAS_SIZE + x
+      if (x < 0 || x >= CANVAS_SIZE || y < 0 || y >= CANVAS_SIZE) continue
+      if (visited[pi]) continue
+      const i = pi * 4
+      if (!match(i)) continue
+
+      visited[pi] = 1
+      data[i] = fc[0]; data[i + 1] = fc[1]; data[i + 2] = fc[2]; data[i + 3] = fc[3]
+
+      stack.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1])
+    }
+
+    ctx.putImageData(imageData, 0, 0)
+  }, [])
+
   const startDrawing = (e) => {
     e.preventDefault()
     const pos = getPos(e)
     lastPosRef.current = pos
+
+    if (tool === 'fill') {
+      saveToHistory()
+      floodFill(pos.x, pos.y, color)
+      saveToHistory()
+      return
+    }
+
     setIsDrawing(true)
 
     const canvas = drawCanvasRef.current
@@ -250,6 +309,11 @@ function DrawingCanvas({ level, onComplete, onBack }) {
                 onClick={() => setTool('brush')}
                 title="Brush"
               >✏️</button>
+              <button
+                className={`tool-btn ${tool === 'fill' ? 'active' : ''}`}
+                onClick={() => setTool('fill')}
+                title="Fill"
+              >🪣</button>
               <button
                 className={`tool-btn ${tool === 'eraser' ? 'active' : ''}`}
                 onClick={() => setTool('eraser')}
