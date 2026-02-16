@@ -179,6 +179,12 @@
   background: #f8f8f8;
 }
 
+.quiz-btn-row {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
 .submit-btn {
   font-family: 'Fredoka One', cursive;
   font-size: 16px;
@@ -195,6 +201,24 @@
 .submit-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 14px rgba(102, 126, 234, 0.45);
+}
+
+.skip-btn {
+  font-family: 'Fredoka One', cursive;
+  font-size: 16px;
+  padding: 12px 22px;
+  background: linear-gradient(180deg, #aaa, #999);
+  color: white;
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.skip-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
 }
 
 /* ── Feedback ── */

@@ -1,5 +1,6 @@
 import React from 'react'
 import './Landing.css'
+import liamImage from '../assets/image.jpg'
 
 const PalmTree = ({ className }) => (
   <svg className={`palm-tree ${className}`} viewBox="0 0 120 220" fill="none">
@@ -34,6 +35,7 @@ function Landing({ onChooseLevel, onShowAuth, user }) {
       {/* Palm Trees */}
       <PalmTree className="palm-left-1" />
       <PalmTree className="palm-left-2" />
+      <img src={liamImage} alt="Liami" className="landing-photo" />
       <PalmTree className="palm-right-1" />
       <PalmTree className="palm-right-2" />
 

@@ -164,7 +164,14 @@ function Quiz({ level, onComplete, onBack }) {
             autoComplete="off"
           />
           {!showNext && (
-            <button type="submit" className="submit-btn">✓ בדקי</button>
+            <div className="quiz-btn-row">
+              <button type="submit" className="submit-btn">✓ בדקי</button>
+              <button type="button" className="skip-btn" onClick={() => {
+                setFeedback({ correct: false, message: `${currentWord.translations[0]} :התשובה הנכונה` })
+                setWrongWords(prev => [...prev, currentWord])
+                setShowNext(true)
+              }}>דלגי ⏭</button>
+            </div>
           )}
         </form>
 
