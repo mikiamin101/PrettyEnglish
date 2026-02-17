@@ -192,6 +192,10 @@
   cursor: grabbing;
 }
 
+.canvas-draw.canvas-picking {
+  cursor: crosshair;
+}
+
 .zoom-hint {
   font-family: 'Rubik', sans-serif;
   font-size: 10px;
@@ -279,6 +283,19 @@
   cursor: crosshair;
   display: block;
   margin: 0 auto;
+}
+
+/* Color wheel + picker row */
+.color-wheel-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.picker-btn {
+  font-size: 18px !important;
+  padding: 6px 8px !important;
+  align-self: center;
 }
 
 /* Hex input row */

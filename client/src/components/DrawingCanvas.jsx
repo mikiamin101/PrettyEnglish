@@ -137,7 +137,28 @@ function DrawingCanvas({ level, onComplete, onBack }) {
   const stopPan = () => { setIsPanning(false); panStartRef.current = null }
 
   // ── Canvas mouse/touch handlers ──
+  const pickColorFromCanvas = (e) => {
+    e.preventDefault()
+    const pos = getPos(e)
+    // Sample from both layers by compositing onto a temp canvas
+    const tempCanvas = document.createElement('canvas')
+    tempCanvas.width = CANVAS_SIZE
+    tempCanvas.height = CANVAS_SIZE
+    const tempCtx = tempCanvas.getContext('2d')
+    tempCtx.drawImage(bgCanvasRef.current, 0, 0)
+    tempCtx.drawImage(drawCanvasRef.current, 0, 0)
+    const pixel = tempCtx.getImageData(Math.round(pos.x), Math.round(pos.y), 1, 1).data
+    const hex = '#' + [pixel[0], pixel[1], pixel[2]].map(c => c.toString(16).padStart(2, '0')).join('')
+    setColor(hex)
+    setHexInput(hex)
+    setTool('brush')
+  }
+
   const handleCanvasMouseDown = (e) => {
+    if (tool === 'picker') {
+      pickColorFromCanvas(e)
+      return
+    }
     if (tool === 'zoom') {
       e.preventDefault()
       if (e.button === 2 || e.shiftKey) {
@@ -165,6 +186,10 @@ function DrawingCanvas({ level, onComplete, onBack }) {
   }
 
   const handleCanvasTouchStart = (e) => {
+    if (tool === 'picker') {
+      pickColorFromCanvas(e)
+      return
+    }
     if (tool === 'zoom') {
       e.preventDefault()
       if (e.touches.length === 1) {
@@ -442,7 +467,7 @@ function DrawingCanvas({ level, onComplete, onBack }) {
             />
             <canvas
               ref={drawCanvasRef}
-              className={`canvas-draw ${tool === 'zoom' ? 'canvas-panning' : ''}`}
+              className={`canvas-draw ${tool === 'zoom' ? 'canvas-panning' : ''} ${tool === 'picker' ? 'canvas-picking' : ''}`}
               width={CANVAS_SIZE}
               height={CANVAS_SIZE}
               onMouseDown={handleCanvasMouseDown}
@@ -501,7 +526,14 @@ function DrawingCanvas({ level, onComplete, onBack }) {
 
           <div className="tool-group">
             <span className="tool-group-label">Color</span>
-            <ColorWheel color={color} onChange={handleColorChange} />
+            <div className="color-wheel-row">
+              <ColorWheel color={color} onChange={handleColorChange} />
+              <button
+                className={`tool-btn picker-btn ${tool === 'picker' ? 'active' : ''}`}
+                onClick={() => setTool('picker')}
+                title="Pick color from canvas"
+              >💉</button>
+            </div>
             <div className="hex-input-row">
               <div className="hex-preview" style={{ background: color }} />
               <input
