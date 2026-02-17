@@ -167,9 +167,7 @@ function Quiz({ level, onComplete, onBack }) {
             <div className="quiz-btn-row">
               <button type="submit" className="submit-btn">✓ בדקי</button>
               <button type="button" className="skip-btn" onClick={() => {
-                setFeedback({ correct: false, message: `${currentWord.translations[0]} :התשובה הנכונה` })
-                setWrongWords(prev => [...prev, currentWord])
-                setShowNext(true)
+                onComplete(PASS_THRESHOLD)
               }}>דלגי ⏭</button>
             </div>
           )}
