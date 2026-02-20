@@ -1,8 +1,10 @@
-import React from 'react'
+import React, { useState } from 'react'
 import './LevelSelect.css'
 import { levels } from '../data/levels'
 
-function LevelSelect({ progress, onSelectLevel, onBack }) {
+function LevelSelect({ progress, onSelectLevel, onBack, onViewResult }) {
+  const [selectedCompleted, setSelectedCompleted] = useState(null)
+
   const renderStars = (levelNum) => {
     const stars = progress[levelNum] || 0
     return (
@@ -21,6 +23,14 @@ function LevelSelect({ progress, onSelectLevel, onBack }) {
     return (progress[levelNum - 1] || 0) >= 1
   }
 
+  const handleLevelClick = (levelId) => {
+    if ((progress[levelId] || 0) > 0) {
+      setSelectedCompleted(levelId)
+    } else {
+      onSelectLevel(levelId)
+    }
+  }
+
   return (
     <div className="level-select">
       <button className="back-btn" onClick={onBack}>← Back</button>
@@ -34,7 +44,7 @@ function LevelSelect({ progress, onSelectLevel, onBack }) {
             <button
               key={level.id}
               className={`level-box ${unlocked ? 'unlocked' : 'locked'}`}
-              onClick={() => unlocked && onSelectLevel(level.id)}
+              onClick={() => unlocked && handleLevelClick(level.id)}
               disabled={!unlocked}
             >
               <div className="level-number">{level.id}</div>
@@ -45,6 +55,23 @@ function LevelSelect({ progress, onSelectLevel, onBack }) {
           )
         })}
       </div>
+
+      {selectedCompleted && (
+        <div className="level-popup-overlay" onClick={() => setSelectedCompleted(null)}>
+          <div className="level-popup" onClick={e => e.stopPropagation()}>
+            <h3 className="level-popup-title">Level {selectedCompleted}</h3>
+            <p className="level-popup-theme">{levels.find(l => l.id === selectedCompleted)?.theme}</p>
+            <div className="level-popup-buttons">
+              <button className="level-popup-btn play-btn" onClick={() => { setSelectedCompleted(null); onSelectLevel(selectedCompleted) }}>
+                ▶ Play Again
+              </button>
+              <button className="level-popup-btn view-btn" onClick={() => { setSelectedCompleted(null); onViewResult(selectedCompleted) }}>
+                👁 View Previous
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

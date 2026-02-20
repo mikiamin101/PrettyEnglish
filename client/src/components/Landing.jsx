@@ -17,7 +17,7 @@ const PalmTree = ({ className }) => (
   </svg>
 )
 
-function Landing({ onChooseLevel, onShowAuth, user }) {
+function Landing({ onChooseLevel, onShowAuth, user, onGallery, onVersus }) {
   return (
     <div className="landing">
       {/* Top Bar */}
@@ -71,6 +71,15 @@ function Landing({ onChooseLevel, onShowAuth, user }) {
         <button className="choose-level-btn" onClick={onChooseLevel}>
           🎮 Choose Level
         </button>
+
+        <div className="landing-extra-buttons">
+          <button className="landing-btn versus-btn" onClick={onVersus}>
+            ⚔️ 1v1 Battle
+          </button>
+          <button className="landing-btn gallery-btn" onClick={onGallery}>
+            🖼️ Gallery
+          </button>
+        </div>
       </div>
 
       {/* Floating Decorations */}

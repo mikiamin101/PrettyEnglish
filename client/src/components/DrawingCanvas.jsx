@@ -30,8 +30,9 @@ const MANNEQUINS = [
 
 
 
-function DrawingCanvas({ level, onComplete, onBack }) {
+function DrawingCanvas({ level, onComplete, onBack, customTheme, timerSeconds, playerLabel }) {
   const levelData = levels.find(l => l.id === level)
+  const theme = customTheme || levelData?.theme || 'Fashion'
   const bgCanvasRef = useRef(null)    // mannequin layer (bottom, untouchable)
   const drawCanvasRef = useRef(null)  // drawing layer (top, user draws here)
   const [isDrawing, setIsDrawing] = useState(false)
@@ -46,9 +47,11 @@ function DrawingCanvas({ level, onComplete, onBack }) {
   const [zoom, setZoom] = useState(1)
   const [pan, setPan] = useState({ x: 0, y: 0 })
   const [isPanning, setIsPanning] = useState(false)
+  const [timeLeft, setTimeLeft] = useState(null)
   const panStartRef = useRef(null)
   const lastPosRef = useRef(null)
   const wrapperRef = useRef(null)
+  const autoSubmittedRef = useRef(false)
 
   const drawMannequin = useCallback((ctx, mannequinId) => {
     const mannequin = MANNEQUINS[mannequinId] || MANNEQUINS[0]
@@ -74,6 +77,42 @@ function DrawingCanvas({ level, onComplete, onBack }) {
       setHistory(prev => [...prev, imageData])
     }
   }, [])
+
+  // Start timer when mannequin selected
+  useEffect(() => {
+    if (selectedMannequin !== null && timerSeconds && timeLeft === null) {
+      setTimeLeft(timerSeconds)
+    }
+  }, [selectedMannequin, timerSeconds])
+
+  useEffect(() => {
+    if (timeLeft === null || timeLeft < 0) return
+    if (timeLeft === 0) {
+      if (!autoSubmittedRef.current) {
+        autoSubmittedRef.current = true
+        autoSubmit()
+      }
+      return
+    }
+    const t = setTimeout(() => setTimeLeft(timeLeft - 1), 1000)
+    return () => clearTimeout(t)
+  }, [timeLeft])
+
+  const autoSubmit = () => {
+    const mergedCanvas = document.createElement('canvas')
+    mergedCanvas.width = CANVAS_SIZE
+    mergedCanvas.height = CANVAS_SIZE
+    const mergedCtx = mergedCanvas.getContext('2d')
+    mergedCtx.drawImage(bgCanvasRef.current, 0, 0)
+    mergedCtx.drawImage(drawCanvasRef.current, 0, 0)
+    const imageData = mergedCanvas.toDataURL('image/png')
+    onComplete({
+      drawing: imageData,
+      mannequin: selectedMannequin,
+      theme,
+      outfitItems
+    })
+  }
 
   // Init: draw mannequin on bg canvas, clear drawing canvas
   useEffect(() => {
@@ -379,7 +418,7 @@ function DrawingCanvas({ level, onComplete, onBack }) {
 
   // Flatten both layers into one image for submission
   const handleSubmit = () => {
-    if (outfitItems.length < 1) {
+    if (!customTheme && outfitItems.length < 1) {
       alert('Add at least 1 outfit item to describe what you drew!')
       return
     }
@@ -393,7 +432,7 @@ function DrawingCanvas({ level, onComplete, onBack }) {
     onComplete({
       drawing: imageData,
       mannequin: selectedMannequin,
-      theme: levelData.theme,
+      theme,
       outfitItems
     })
   }
@@ -446,8 +485,14 @@ function DrawingCanvas({ level, onComplete, onBack }) {
       <div className="drawing-layout">
         {/* Left info panel */}
         <div className="drawing-info-panel">
-          <h2 className="bubble-text theme-display">🎨 {levelData?.theme}</h2>
+          {playerLabel && <h3 className="player-label-display">{playerLabel}</h3>}
+          <h2 className="bubble-text theme-display">🎨 {theme}</h2>
           <p className="theme-instruction">Draw an outfit on the mannequin!</p>
+          {timeLeft !== null && (
+            <div className={`timer-display ${timeLeft <= 10 ? 'timer-urgent' : ''}`}>
+              ⏱ {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}
+            </div>
+          )}
         </div>
 
         {/* Canvas — two layers stacked */}
@@ -592,7 +637,7 @@ function DrawingCanvas({ level, onComplete, onBack }) {
             </div>
           </div>
 
-          <button className="action-btn submit-btn-canvas" onClick={handleSubmit} disabled={outfitItems.length < 1}>
+          <button className="action-btn submit-btn-canvas" onClick={handleSubmit} disabled={!customTheme && outfitItems.length < 1}>
             ✨ Make it Real!
           </button>
         </div>

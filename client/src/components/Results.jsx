@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import './Results.css'
+import { resizeImage } from '../utils/imageUtils'
 
-function Results({ level, resultData, quizScore, onDone }) {
+function Results({ level, resultData, quizScore, onDone, reviewMode, onPlayAgain }) {
   const [aiImage, setAiImage] = useState(null)
   const [score, setScore] = useState(null)
   const [feedback, setFeedback] = useState('')
@@ -9,7 +10,14 @@ function Results({ level, resultData, quizScore, onDone }) {
   const [lightbox, setLightbox] = useState(null)
 
   useEffect(() => {
-    processWithAI()
+    if (reviewMode) {
+      setAiImage(resultData.aiImage)
+      setScore(resultData.score)
+      setFeedback(resultData.feedback || '')
+      setLoading(false)
+    } else {
+      processWithAI()
+    }
   }, [])
 
   const processWithAI = async () => {
@@ -29,12 +37,11 @@ function Results({ level, resultData, quizScore, onDone }) {
       if (response.ok) {
         const data = await response.json()
         console.log('AI response received, image length:', data.generatedImage?.length)
-        console.log('Image starts with:', data.generatedImage?.substring(0, 50))
-        console.log('Score:', data.score, 'Feedback:', data.feedback)
         setAiImage(data.generatedImage)
         setScore(data.score)
         setFeedback(data.feedback || '')
         setLoading(false)
+        saveResults(data.generatedImage, data.score, data.feedback || '')
       } else {
         console.error('AI response not ok:', response.status)
         simulateResults()
@@ -50,9 +57,53 @@ function Results({ level, resultData, quizScore, onDone }) {
     setTimeout(() => {
       setAiImage(resultData.drawing)
       const simulated = (Math.random() * 3 + 7).toFixed(1)
-      setScore(parseFloat(simulated))
+      const simScore = parseFloat(simulated)
+      setScore(simScore)
       setLoading(false)
+      saveResults(resultData.drawing, simScore, '')
     }, 2500)
+  }
+
+  const saveResults = async (aiImg, sc, fb) => {
+    // Save level result for review
+    try {
+      const levelResults = JSON.parse(localStorage.getItem('prettyEnglishLevelResults') || '{}')
+      levelResults[level] = {
+        drawing: resultData.drawing,
+        aiImage: aiImg,
+        score: sc,
+        feedback: fb,
+        theme: resultData.theme,
+        mannequin: resultData.mannequin,
+        outfitItems: resultData.outfitItems,
+        date: new Date().toISOString()
+      }
+      localStorage.setItem('prettyEnglishLevelResults', JSON.stringify(levelResults))
+    } catch (err) {
+      console.log('Level result save error:', err)
+    }
+
+    // Save to gallery (thumbnails)
+    try {
+      const thumbDraw = await resizeImage(resultData.drawing)
+      const thumbAi = await resizeImage(aiImg || resultData.drawing)
+      const gallery = JSON.parse(localStorage.getItem('prettyEnglishGallery') || '[]')
+      gallery.push({
+        id: Date.now(),
+        versus: false,
+        theme: resultData.theme,
+        drawing: thumbDraw,
+        aiImage: thumbAi,
+        score: sc,
+        feedback: fb,
+        levelId: level,
+        date: new Date().toISOString()
+      })
+      while (gallery.length > 30) gallery.shift()
+      localStorage.setItem('prettyEnglishGallery', JSON.stringify(gallery))
+    } catch (err) {
+      console.log('Gallery save error:', err)
+    }
   }
 
   const getStars = (s) => {
@@ -86,10 +137,17 @@ function Results({ level, resultData, quizScore, onDone }) {
       ) : (
         <div className="results-content">
           <div className="results-header-row">
-            <h2 className="bubble-text results-heading">Results!</h2>
-            <button className="results-continue" onClick={() => onDone(isPerfect ? 4 : stars)}>
-              Continue →
-            </button>
+            <h2 className="bubble-text results-heading">{reviewMode ? 'Previous Design' : 'Results!'}</h2>
+            {reviewMode ? (
+              <>
+                <button className="results-continue" onClick={onPlayAgain}>▶ Play Again</button>
+                <button className="results-continue" onClick={() => onDone(0)}>← Back</button>
+              </>
+            ) : (
+              <button className="results-continue" onClick={() => onDone(isPerfect ? 4 : stars)}>
+                Continue →
+              </button>
+            )}
           </div>
 
           <div className="results-images">

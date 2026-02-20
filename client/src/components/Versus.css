@@ -1,0 +1,194 @@
+.versus {
+  width: 100%;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  position: relative;
+  overflow-y: auto;
+}
+
+.versus-back {
+  position: absolute;
+  top: 10px;
+  left: 12px;
+}
+
+.versus-title {
+  color: white;
+  font-size: 32px;
+  margin-bottom: 16px;
+  margin-top: 5px;
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.2);
+}
+
+.versus-form {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 20px;
+  padding: 24px;
+  max-width: 500px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(6px);
+}
+
+.versus-names {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.versus-name-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.versus-label {
+  font-family: 'Fredoka One', cursive;
+  font-size: 14px;
+  color: #6B4226;
+}
+
+.versus-input {
+  padding: 8px 12px;
+  border: 2px solid #ddd;
+  border-radius: 10px;
+  font-family: 'Rubik', sans-serif;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.versus-input:focus {
+  border-color: #f5576c;
+}
+
+.versus-vs-text {
+  font-family: 'Fredoka One', cursive;
+  font-size: 22px;
+  color: #f5576c;
+  margin-top: 18px;
+}
+
+.versus-option {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.versus-toggle-row {
+  display: flex;
+  gap: 6px;
+}
+
+.toggle-btn {
+  font-family: 'Fredoka One', cursive;
+  font-size: 13px;
+  padding: 6px 16px;
+  border: 2px solid #ddd;
+  border-radius: 10px;
+  background: white;
+  color: #777;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.toggle-btn.active {
+  background: #f5576c;
+  color: white;
+  border-color: #f5576c;
+}
+
+.toggle-btn:hover:not(.active) {
+  border-color: #f5576c;
+  color: #f5576c;
+}
+
+.timer-options {
+  display: flex;
+  gap: 6px;
+}
+
+.timer-btn {
+  font-family: 'Fredoka One', cursive;
+  font-size: 12px;
+  padding: 5px 12px;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  background: white;
+  color: #777;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.timer-btn.active {
+  background: #FF6B6B;
+  color: white;
+  border-color: #FF6B6B;
+}
+
+.theme-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+.theme-option {
+  font-family: 'Rubik', sans-serif;
+  font-size: 11px;
+  padding: 4px 10px;
+  border: 2px solid #eee;
+  border-radius: 14px;
+  background: white;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.theme-option.active {
+  background: #f093fb;
+  color: white;
+  border-color: #f093fb;
+}
+
+.theme-option:hover:not(.active) {
+  border-color: #f093fb;
+  color: #f093fb;
+}
+
+.versus-start-btn {
+  font-family: 'Fredoka One', cursive;
+  font-size: 20px;
+  padding: 14px 32px;
+  background: linear-gradient(180deg, #f5576c, #e8445a);
+  color: white;
+  border: 3px solid #c0392b;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: all 0.25s;
+  box-shadow: 0 4px 14px rgba(245, 87, 108, 0.4);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+  align-self: center;
+}
+
+.versus-start-btn:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 7px 20px rgba(245, 87, 108, 0.5);
+}
+
+.versus-start-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}

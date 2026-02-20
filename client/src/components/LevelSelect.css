@@ -143,3 +143,85 @@
   background: rgba(0, 0, 0, 0.12);
   border-radius: 12px;
 }
+
+/* ── Level Popup ── */
+.level-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.level-popup {
+  background: white;
+  border-radius: 20px;
+  padding: 28px 36px;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  animation: popupAppear 0.25s ease;
+}
+
+@keyframes popupAppear {
+  from { transform: scale(0.85); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.level-popup-title {
+  font-family: 'Fredoka One', cursive;
+  font-size: 24px;
+  color: #6B4226;
+  margin: 0;
+}
+
+.level-popup-theme {
+  font-family: 'Rubik', sans-serif;
+  font-size: 14px;
+  color: #888;
+  margin: 0;
+}
+
+.level-popup-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.level-popup-btn {
+  font-family: 'Fredoka One', cursive;
+  font-size: 14px;
+  padding: 10px 22px;
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.level-popup-btn.play-btn {
+  background: linear-gradient(180deg, #FF6B6B, #EE5A24);
+  color: white;
+  box-shadow: 0 3px 10px rgba(238, 90, 36, 0.3);
+}
+
+.level-popup-btn.play-btn:hover {
+  transform: translateY(-2px);
+}
+
+.level-popup-btn.view-btn {
+  background: linear-gradient(180deg, #667eea, #764ba2);
+  color: white;
+  box-shadow: 0 3px 10px rgba(118, 75, 162, 0.3);
+}
+
+.level-popup-btn.view-btn:hover {
+  transform: translateY(-2px);
+}

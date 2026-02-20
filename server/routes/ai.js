@@ -133,4 +133,64 @@ Respond with ONLY a JSON object: {"score": <number between 1 and 10, can use one
   }
 })
 
+router.post('/judge', async (req, res) => {
+  try {
+    const { image1, image2, theme, p1Name, p2Name } = req.body
+
+    let winner = Math.random() > 0.5 ? 'p1' : 'p2'
+    let feedback = `${winner === 'p1' ? p1Name : p2Name} wins this round!`
+
+    if (!process.env.OPENAI_API_KEY) {
+      return res.json({ winner, feedback })
+    }
+
+    try {
+      const judgeResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o',
+          messages: [
+            {
+              role: 'system',
+              content: `You are a fun fashion judge comparing two outfits for the theme "${theme}". Compare ${p1Name}'s design (Image 1) and ${p2Name}'s design (Image 2). Pick a winner or declare a tie based on creativity, theme fit, and style. Be encouraging and fun!\n\nRespond with ONLY a JSON object: {"winner": "p1" or "p2" or "tie", "feedback": "<fun 1-2 sentence verdict>"}`
+            },
+            {
+              role: 'user',
+              content: [
+                { type: 'text', text: `Compare these two ${theme} outfits. Image 1 is ${p1Name}'s design, Image 2 is ${p2Name}'s design. Who wins?` },
+                { type: 'image_url', image_url: { url: image1 } },
+                { type: 'image_url', image_url: { url: image2 } }
+              ]
+            }
+          ],
+          max_tokens: 200
+        })
+      })
+
+      if (judgeResponse.ok) {
+        const judgeData = await judgeResponse.json()
+        const content = judgeData.choices[0].message.content
+        try {
+          const parsed = JSON.parse(content)
+          winner = parsed.winner
+          feedback = parsed.feedback || feedback
+        } catch {
+          console.log('Could not parse judge response:', content)
+        }
+      }
+    } catch (err) {
+      console.error('Judge AI error:', err.message)
+    }
+
+    res.json({ winner, feedback })
+  } catch (err) {
+    console.error('Judge error:', err)
+    res.status(500).json({ error: 'Judging failed' })
+  }
+})
+
 export default router

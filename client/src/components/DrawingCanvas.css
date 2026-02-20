@@ -143,6 +143,43 @@
   text-align: center;
 }
 
+/* ── Timer ── */
+.timer-display {
+  font-family: 'Fredoka One', cursive;
+  font-size: 28px;
+  color: #6B4226;
+  background: rgba(255, 255, 255, 0.7);
+  padding: 6px 18px;
+  border-radius: 14px;
+  text-align: center;
+  margin-top: 4px;
+  transition: all 0.3s;
+}
+
+.timer-display.timer-urgent {
+  color: #e74c3c;
+  background: rgba(255, 200, 200, 0.8);
+  animation: timerPulse 0.5s ease-in-out infinite;
+}
+
+@keyframes timerPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+/* ── Player Label ── */
+.player-label-display {
+  font-family: 'Fredoka One', cursive;
+  font-size: 16px;
+  color: white;
+  background: linear-gradient(135deg, #f093fb, #f5576c);
+  padding: 4px 16px;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 3px 10px rgba(245, 87, 108, 0.3);
+  margin: 0;
+}
+
 /* ── Canvas ── */
 .canvas-wrapper {
   position: relative;
