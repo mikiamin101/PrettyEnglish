@@ -19,9 +19,34 @@
 .versus-title {
   color: white;
   font-size: 32px;
-  margin-bottom: 16px;
+  margin-bottom: 8px;
   margin-top: 5px;
   text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.2);
+}
+
+.versus-subtitle {
+  font-family: 'Fredoka One', cursive;
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.85);
+  margin: 0 0 14px 0;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.1);
+}
+
+.versus-error {
+  font-family: 'Fredoka One', cursive;
+  font-size: 14px;
+  color: white;
+  background: rgba(220, 53, 69, 0.85);
+  border-radius: 12px;
+  padding: 10px 20px;
+  margin-bottom: 10px;
+  animation: shakeError 0.4s ease;
+}
+
+@keyframes shakeError {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
 }
 
 .versus-form {
@@ -37,10 +62,50 @@
   backdrop-filter: blur(6px);
 }
 
-.versus-names {
+.versus-form-desc {
+  font-family: 'Rubik', sans-serif;
+  font-size: 14px;
+  color: #777;
+  text-align: center;
+  margin: 0;
+}
+
+.versus-menu-buttons {
   display: flex;
-  align-items: center;
   gap: 12px;
+}
+
+.versus-menu-btn {
+  flex: 1;
+  font-family: 'Fredoka One', cursive;
+  font-size: 18px;
+  padding: 18px 16px;
+  border-radius: 16px;
+  border: 3px solid transparent;
+  cursor: pointer;
+  transition: all 0.25s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.versus-menu-btn.create-btn {
+  background: linear-gradient(180deg, #667eea, #5a67d8);
+  color: white;
+  border-color: #4c51bf;
+  box-shadow: 0 4px 14px rgba(102, 126, 234, 0.4);
+}
+
+.versus-menu-btn.join-btn {
+  background: linear-gradient(180deg, #48bb78, #38a169);
+  color: white;
+  border-color: #2f855a;
+  box-shadow: 0 4px 14px rgba(72, 187, 120, 0.4);
+}
+
+.versus-menu-btn:hover {
+  transform: translateY(-3px);
 }
 
 .versus-name-group {
@@ -68,13 +133,6 @@
 
 .versus-input:focus {
   border-color: #f5576c;
-}
-
-.versus-vs-text {
-  font-family: 'Fredoka One', cursive;
-  font-size: 22px;
-  color: #f5576c;
-  margin-top: 18px;
 }
 
 .versus-option {
@@ -191,4 +249,163 @@
   opacity: 0.5;
   cursor: not-allowed;
   transform: none;
+}
+
+/* ── Lobby (waiting for opponent) ── */
+.lobby-waiting {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.lobby-title {
+  font-family: 'Fredoka One', cursive;
+  font-size: 22px;
+  color: #6B4226;
+  margin: 0;
+}
+
+.lobby-code-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.lobby-code-label {
+  font-family: 'Rubik', sans-serif;
+  font-size: 14px;
+  color: #777;
+}
+
+.lobby-code-display {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  padding: 12px 24px;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.lobby-code-display:hover {
+  transform: scale(1.05);
+}
+
+.lobby-code {
+  font-family: 'Fredoka One', cursive;
+  font-size: 36px;
+  color: white;
+  letter-spacing: 6px;
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.2);
+}
+
+.lobby-copy-icon {
+  font-size: 22px;
+}
+
+.lobby-copied-text {
+  font-family: 'Fredoka One', cursive;
+  font-size: 13px;
+  color: #48bb78;
+}
+
+.lobby-waiting-animation {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.lobby-waiting-text {
+  font-family: 'Fredoka One', cursive;
+  font-size: 14px;
+  color: #999;
+}
+
+/* ── Ready screen (match found) ── */
+.versus-ready-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  animation: resultsAppear 0.5s ease;
+  margin-top: 60px;
+}
+
+@keyframes resultsAppear {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.versus-matchup {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.versus-matchup-name {
+  font-family: 'Fredoka One', cursive;
+  font-size: 24px;
+  color: white;
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.2);
+  background: rgba(255, 255, 255, 0.2);
+  padding: 8px 18px;
+  border-radius: 14px;
+}
+
+.versus-matchup-vs {
+  font-family: 'Fredoka One', cursive;
+  font-size: 28px;
+  color: #FFD93D;
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.3);
+}
+
+.versus-theme-reveal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.versus-theme-label {
+  font-family: 'Rubik', sans-serif;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.versus-theme-name {
+  font-family: 'Fredoka One', cursive;
+  font-size: 22px;
+  color: white;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 6px 20px;
+  border-radius: 12px;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.15);
+}
+
+.versus-timer-info {
+  font-family: 'Fredoka One', cursive;
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.85);
+  margin: 0;
+}
+
+.versus-starting-text {
+  font-family: 'Fredoka One', cursive;
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.85);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.room-code-input {
+  font-family: 'Fredoka One', cursive;
 }

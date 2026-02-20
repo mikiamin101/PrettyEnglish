@@ -2,192 +2,135 @@ import React, { useState, useEffect } from 'react'
 import './VersusResults.css'
 import { resizeImage } from '../utils/imageUtils'
 
-function VersusResults({ config, p1Data, p2Data, onDone }) {
-  const [phase, setPhase] = useState('processing') // 'processing' | 'judging' | 'done'
-  const [p1Result, setP1Result] = useState(null)
-  const [p2Result, setP2Result] = useState(null)
-  const [winner, setWinner] = useState(null)
-  const [verdict, setVerdict] = useState('')
+function VersusResults({ socket, onDone }) {
+  const [phase, setPhase] = useState('waiting') // 'waiting' | 'processing' | 'judging' | 'done'
+  const [results, setResults] = useState(null)
   const [lightbox, setLightbox] = useState(null)
 
   useEffect(() => {
-    processAndJudge()
-  }, [])
+    if (!socket) return
 
-  const processDrawing = async (data) => {
-    try {
-      const response = await fetch('/api/ai/process', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          drawing: data.drawing,
+    const onPhaseUpdate = ({ phase: p }) => setPhase(p)
+
+    const onVersusResults = async (data) => {
+      setResults(data)
+      setPhase('done')
+
+      // Save to gallery
+      try {
+        const [thumbHostDraw, thumbHostAi, thumbGuestDraw, thumbGuestAi] = await Promise.all([
+          resizeImage(data.hostResult.drawing),
+          resizeImage(data.hostResult.aiImage || data.hostResult.drawing),
+          resizeImage(data.guestResult.drawing),
+          resizeImage(data.guestResult.aiImage || data.guestResult.drawing)
+        ])
+
+        const gallery = JSON.parse(localStorage.getItem('prettyEnglishGallery') || '[]')
+        gallery.push({
+          id: Date.now(),
+          versus: true,
           theme: data.theme,
-          mannequin: data.mannequin,
-          outfitItems: data.outfitItems || []
+          p1Name: data.hostName,
+          p2Name: data.guestName,
+          p1Drawing: thumbHostDraw,
+          p2Drawing: thumbGuestDraw,
+          p1AiImage: thumbHostAi,
+          p2AiImage: thumbGuestAi,
+          p1Score: data.hostResult.score,
+          p2Score: data.guestResult.score,
+          winner: data.winner === 'host' ? 'p1' : data.winner === 'guest' ? 'p2' : 'tie',
+          feedback: data.verdict,
+          date: new Date().toISOString()
         })
-      })
-      if (response.ok) {
-        const result = await response.json()
-        return { aiImage: result.generatedImage, score: result.score, feedback: result.feedback }
+        while (gallery.length > 30) gallery.shift()
+        localStorage.setItem('prettyEnglishGallery', JSON.stringify(gallery))
+      } catch (err) {
+        console.log('Gallery save error:', err)
       }
-    } catch (err) {
-      console.error('Process error:', err)
     }
-    return {
-      aiImage: data.drawing,
-      score: parseFloat((Math.random() * 3 + 7).toFixed(1)),
-      feedback: ''
-    }
-  }
 
-  const fallbackJudge = (r1, r2) => {
-    if (r1.score > r2.score) return { winner: 'p1', feedback: `${config.p1Name} wins with a higher score!` }
-    if (r2.score > r1.score) return { winner: 'p2', feedback: `${config.p2Name} wins with a higher score!` }
-    return { winner: 'tie', feedback: "It's a perfect tie! Both designs are amazing!" }
-  }
-
-  const processAndJudge = async () => {
-    setPhase('processing')
-
-    const [result1, result2] = await Promise.all([
-      processDrawing(p1Data),
-      processDrawing(p2Data)
-    ])
-
-    setP1Result(result1)
-    setP2Result(result2)
-    setPhase('judging')
-
-    let winnerResult, verdictResult
-
-    try {
-      const judgeRes = await fetch('/api/ai/judge', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          image1: result1.aiImage,
-          image2: result2.aiImage,
-          theme: config.theme,
-          p1Name: config.p1Name,
-          p2Name: config.p2Name
-        })
-      })
-
-      if (judgeRes.ok) {
-        const judgeData = await judgeRes.json()
-        winnerResult = judgeData.winner
-        verdictResult = judgeData.feedback
-      } else {
-        const fb = fallbackJudge(result1, result2)
-        winnerResult = fb.winner
-        verdictResult = fb.feedback
+    const onOpponentLeft = () => {
+      if (phase !== 'done') {
+        // Opponent left during processing — stay and wait for results from server
       }
-    } catch {
-      const fb = fallbackJudge(result1, result2)
-      winnerResult = fb.winner
-      verdictResult = fb.feedback
     }
 
-    setWinner(winnerResult)
-    setVerdict(verdictResult)
+    socket.on('phaseUpdate', onPhaseUpdate)
+    socket.on('versusResults', onVersusResults)
+    socket.on('opponentLeft', onOpponentLeft)
 
-    // Save to gallery
-    try {
-      const [thumbP1Draw, thumbP1Ai, thumbP2Draw, thumbP2Ai] = await Promise.all([
-        resizeImage(p1Data.drawing),
-        resizeImage(result1.aiImage || p1Data.drawing),
-        resizeImage(p2Data.drawing),
-        resizeImage(result2.aiImage || p2Data.drawing)
-      ])
-
-      const gallery = JSON.parse(localStorage.getItem('prettyEnglishGallery') || '[]')
-      gallery.push({
-        id: Date.now(),
-        versus: true,
-        theme: config.theme,
-        p1Name: config.p1Name,
-        p2Name: config.p2Name,
-        p1Drawing: thumbP1Draw,
-        p2Drawing: thumbP2Draw,
-        p1AiImage: thumbP1Ai,
-        p2AiImage: thumbP2Ai,
-        p1Score: result1.score,
-        p2Score: result2.score,
-        winner: winnerResult,
-        feedback: verdictResult,
-        date: new Date().toISOString()
-      })
-      while (gallery.length > 30) gallery.shift()
-      localStorage.setItem('prettyEnglishGallery', JSON.stringify(gallery))
-    } catch (err) {
-      console.log('Gallery save error:', err)
+    return () => {
+      socket.off('phaseUpdate', onPhaseUpdate)
+      socket.off('versusResults', onVersusResults)
+      socket.off('opponentLeft', onOpponentLeft)
     }
-
-    setPhase('done')
-  }
+  }, [socket, phase])
 
   const getWinnerName = () => {
-    if (winner === 'p1') return config.p1Name
-    if (winner === 'p2') return config.p2Name
+    if (!results) return null
+    if (results.winner === 'host') return results.hostName
+    if (results.winner === 'guest') return results.guestName
     return null
   }
 
   return (
     <div className="versus-results">
-      {phase !== 'done' ? (
+      {phase !== 'done' || !results ? (
         <div className="loading-container">
           <div className="loading-spinner" />
           <h2 className="bubble-text loading-title">
-            {phase === 'processing' ? '✨ Creating AI Magic...' : '⚖️ Judging...'}
+            {phase === 'judging' ? '⚖️ Judging...' : '✨ Creating AI Magic...'}
           </h2>
           <p className="loading-sub">
-            {phase === 'processing'
-              ? 'Transforming both designs!'
-              : 'The AI is picking a winner...'}
+            {phase === 'judging'
+              ? 'The AI is picking a winner...'
+              : phase === 'waiting'
+                ? 'Waiting for both drawings...'
+                : 'Transforming both designs!'}
           </p>
         </div>
       ) : (
         <div className="versus-results-content">
           <h2 className="bubble-text versus-results-heading">⚔️ Battle Results!</h2>
-          <h3 className="versus-results-theme">{config.theme}</h3>
+          <h3 className="versus-results-theme">{results.theme}</h3>
 
           <div className="versus-results-cards">
-            <div className={`versus-result-card ${winner === 'p1' ? 'winner-card' : ''}`}>
-              {winner === 'p1' && <div className="winner-crown">🏆</div>}
-              <h4 className="versus-player-name">{config.p1Name}</h4>
+            <div className={`versus-result-card ${results.winner === 'host' ? 'winner-card' : ''}`}>
+              {results.winner === 'host' && <div className="winner-crown">🏆</div>}
+              <h4 className="versus-player-name">{results.hostName}</h4>
               <img
-                src={p1Result?.aiImage || p1Data.drawing}
-                alt={config.p1Name}
+                src={results.hostResult.aiImage || results.hostResult.drawing}
+                alt={results.hostName}
                 className="versus-result-img"
-                onClick={() => setLightbox(p1Result?.aiImage || p1Data.drawing)}
+                onClick={() => setLightbox(results.hostResult.aiImage || results.hostResult.drawing)}
               />
-              <span className="versus-player-score">{p1Result?.score?.toFixed(1)}/10</span>
+              <span className="versus-player-score">{results.hostResult.score?.toFixed(1)}/10</span>
             </div>
 
             <div className="versus-results-middle">
               <span className="versus-results-vs">VS</span>
             </div>
 
-            <div className={`versus-result-card ${winner === 'p2' ? 'winner-card' : ''}`}>
-              {winner === 'p2' && <div className="winner-crown">🏆</div>}
-              <h4 className="versus-player-name">{config.p2Name}</h4>
+            <div className={`versus-result-card ${results.winner === 'guest' ? 'winner-card' : ''}`}>
+              {results.winner === 'guest' && <div className="winner-crown">🏆</div>}
+              <h4 className="versus-player-name">{results.guestName}</h4>
               <img
-                src={p2Result?.aiImage || p2Data.drawing}
-                alt={config.p2Name}
+                src={results.guestResult.aiImage || results.guestResult.drawing}
+                alt={results.guestName}
                 className="versus-result-img"
-                onClick={() => setLightbox(p2Result?.aiImage || p2Data.drawing)}
+                onClick={() => setLightbox(results.guestResult.aiImage || results.guestResult.drawing)}
               />
-              <span className="versus-player-score">{p2Result?.score?.toFixed(1)}/10</span>
+              <span className="versus-player-score">{results.guestResult.score?.toFixed(1)}/10</span>
             </div>
           </div>
 
           <div className="versus-verdict-section">
-            {winner === 'tie' ? (
+            {results.winner === 'tie' ? (
               <h3 className="versus-verdict-title">🤝 It's a Tie!</h3>
             ) : (
               <h3 className="versus-verdict-title">🏆 {getWinnerName()} Wins!</h3>
             )}
-            {verdict && <p className="versus-verdict-text">{verdict}</p>}
+            {results.verdict && <p className="versus-verdict-text">{results.verdict}</p>}
           </div>
 
           <button className="versus-done-btn" onClick={onDone}>

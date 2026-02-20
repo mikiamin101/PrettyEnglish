@@ -1,146 +1,257 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import './Versus.css'
 import { fashionThemes } from '../data/fashionThemes'
 
-function Versus({ onStart, onBack }) {
-  const [p1Name, setP1Name] = useState('')
-  const [p2Name, setP2Name] = useState('')
+function Versus({ socket, onStartDrawing, onBack }) {
+  const [mode, setMode] = useState('menu') // 'menu' | 'create' | 'join' | 'lobby'
+  const [playerName, setPlayerName] = useState('')
+  const [roomCode, setRoomCode] = useState('')
+  const [joinCode, setJoinCode] = useState('')
   const [useTimer, setUseTimer] = useState(false)
   const [timerMinutes, setTimerMinutes] = useState(3)
   const [themeMode, setThemeMode] = useState('random')
   const [selectedTheme, setSelectedTheme] = useState(null)
+  const [error, setError] = useState('')
+  const [lobbyInfo, setLobbyInfo] = useState(null)
+  const [copied, setCopied] = useState(false)
 
-  const getUsedThemesKey = () => {
-    return `prettyEnglishVersusUsed_${[p1Name.trim(), p2Name.trim()].sort().join('_')}`
-  }
+  useEffect(() => {
+    if (!socket) return
 
-  const handleStart = () => {
-    if (!p1Name.trim() || !p2Name.trim()) return
-    if (p1Name.trim() === p2Name.trim()) {
-      alert('Use different names!')
-      return
+    const onRoomCreated = ({ code }) => {
+      setRoomCode(code)
+      setMode('lobby')
     }
 
-    let theme
-    if (themeMode === 'choose' && selectedTheme) {
-      theme = selectedTheme
-    } else {
-      // Random — avoid repeats for same two players
-      const key = getUsedThemesKey()
-      let used = []
-      try { used = JSON.parse(localStorage.getItem(key) || '[]') } catch {}
-      const available = fashionThemes.filter((_, i) => !used.includes(i))
-      if (available.length === 0) {
-        // Reset — all themes used
-        localStorage.removeItem(key)
-        theme = fashionThemes[Math.floor(Math.random() * fashionThemes.length)]
-      } else {
-        theme = available[Math.floor(Math.random() * available.length)]
-      }
+    const onRoomReady = (info) => {
+      setLobbyInfo(info)
+      setTimeout(() => onStartDrawing(info), 2500)
     }
 
-    // Track used theme
-    try {
-      const key = getUsedThemesKey()
-      let used = []
-      try { used = JSON.parse(localStorage.getItem(key) || '[]') } catch {}
-      const idx = fashionThemes.indexOf(theme)
-      if (idx >= 0 && !used.includes(idx)) {
-        used.push(idx)
-        localStorage.setItem(key, JSON.stringify(used))
-      }
-    } catch {}
+    const onError = ({ message }) => {
+      setError(message)
+      setTimeout(() => setError(''), 4000)
+    }
 
-    onStart({
-      p1Name: p1Name.trim(),
-      p2Name: p2Name.trim(),
-      theme,
-      timerSeconds: useTimer ? timerMinutes * 60 : null
+    const onOpponentLeft = () => {
+      setError('Opponent left the room!')
+      setLobbyInfo(null)
+      setMode('menu')
+      setTimeout(() => setError(''), 4000)
+    }
+
+    socket.on('roomCreated', onRoomCreated)
+    socket.on('roomReady', onRoomReady)
+    socket.on('error', onError)
+    socket.on('opponentLeft', onOpponentLeft)
+
+    return () => {
+      socket.off('roomCreated', onRoomCreated)
+      socket.off('roomReady', onRoomReady)
+      socket.off('error', onError)
+      socket.off('opponentLeft', onOpponentLeft)
+    }
+  }, [socket, onStartDrawing])
+
+  const handleCreate = () => {
+    if (!playerName.trim()) return
+    socket.emit('createRoom', {
+      playerName: playerName.trim(),
+      useTimer,
+      timerMinutes,
+      themeMode,
+      selectedTheme
     })
   }
 
-  const canStart = p1Name.trim() && p2Name.trim() && (themeMode === 'random' || selectedTheme)
+  const handleJoin = () => {
+    if (!playerName.trim() || !joinCode.trim()) return
+    socket.emit('joinRoom', {
+      code: joinCode.trim().toUpperCase(),
+      playerName: playerName.trim()
+    })
+  }
+
+  const handleCopyCode = () => {
+    navigator.clipboard.writeText(roomCode).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }
+
+  const handleBack = () => {
+    if (mode === 'lobby' || mode === 'create' || mode === 'join') {
+      if (mode === 'lobby') socket.emit('leaveRoom')
+      setMode('menu')
+      setRoomCode('')
+      setLobbyInfo(null)
+    } else {
+      onBack()
+    }
+  }
+
+  // ── Found opponent — show countdown ──
+  if (lobbyInfo) {
+    return (
+      <div className="versus">
+        <div className="versus-ready-screen">
+          <h2 className="bubble-text versus-title">⚔️ Battle Found!</h2>
+          <div className="versus-matchup">
+            <span className="versus-matchup-name">{lobbyInfo.hostName}</span>
+            <span className="versus-matchup-vs">VS</span>
+            <span className="versus-matchup-name">{lobbyInfo.guestName}</span>
+          </div>
+          <div className="versus-theme-reveal">
+            <span className="versus-theme-label">Theme:</span>
+            <span className="versus-theme-name">{lobbyInfo.theme}</span>
+          </div>
+          {lobbyInfo.timerSeconds && (
+            <p className="versus-timer-info">⏱ {lobbyInfo.timerSeconds / 60} min timer</p>
+          )}
+          <div className="loading-spinner" />
+          <p className="versus-starting-text">Starting soon...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="versus">
-      <button className="back-btn versus-back" onClick={onBack}>← Back</button>
+      <button className="back-btn versus-back" onClick={handleBack}>← Back</button>
       <h1 className="bubble-text versus-title">⚔️ 1v1 Fashion Battle</h1>
+      <p className="versus-subtitle">Play online against a friend!</p>
 
-      <div className="versus-form">
-        <div className="versus-names">
-          <div className="versus-name-group">
-            <label className="versus-label">Player 1 👩‍🎨</label>
+      {error && <div className="versus-error">{error}</div>}
+
+      {mode === 'menu' && (
+        <div className="versus-form">
+          <div className="versus-name-group" style={{ width: '100%' }}>
+            <label className="versus-label">Your Name</label>
             <input
               className="versus-input"
-              value={p1Name}
-              onChange={e => setP1Name(e.target.value)}
-              placeholder="Name..."
+              value={playerName}
+              onChange={e => setPlayerName(e.target.value)}
+              placeholder="Enter your name..."
               maxLength={15}
             />
           </div>
-          <span className="versus-vs-text">VS</span>
-          <div className="versus-name-group">
-            <label className="versus-label">Player 2 🎨</label>
+
+          <div className="versus-menu-buttons">
+            <button
+              className="versus-menu-btn create-btn"
+              onClick={() => playerName.trim() ? setMode('create') : setError('Enter your name first!')}
+            >
+              🏠 Create Room
+            </button>
+            <button
+              className="versus-menu-btn join-btn"
+              onClick={() => playerName.trim() ? setMode('join') : setError('Enter your name first!')}
+            >
+              🚪 Join Room
+            </button>
+          </div>
+        </div>
+      )}
+
+      {mode === 'create' && (
+        <div className="versus-form">
+          <p className="versus-form-desc">Set up your battle rules, then share the code!</p>
+
+          <div className="versus-option">
+            <label className="versus-label">⏱ Timer</label>
+            <div className="versus-toggle-row">
+              <button className={`toggle-btn ${!useTimer ? 'active' : ''}`} onClick={() => setUseTimer(false)}>Off</button>
+              <button className={`toggle-btn ${useTimer ? 'active' : ''}`} onClick={() => setUseTimer(true)}>On</button>
+            </div>
+            {useTimer && (
+              <div className="timer-options">
+                {[1, 2, 3, 5].map(m => (
+                  <button
+                    key={m}
+                    className={`timer-btn ${timerMinutes === m ? 'active' : ''}`}
+                    onClick={() => setTimerMinutes(m)}
+                  >
+                    {m} min
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="versus-option">
+            <label className="versus-label">🎨 Theme</label>
+            <div className="versus-toggle-row">
+              <button className={`toggle-btn ${themeMode === 'random' ? 'active' : ''}`} onClick={() => setThemeMode('random')}>🎲 Random</button>
+              <button className={`toggle-btn ${themeMode === 'choose' ? 'active' : ''}`} onClick={() => setThemeMode('choose')}>📋 Choose</button>
+            </div>
+            {themeMode === 'choose' && (
+              <div className="theme-grid">
+                {fashionThemes.map((t, i) => (
+                  <button
+                    key={i}
+                    className={`theme-option ${selectedTheme === t ? 'active' : ''}`}
+                    onClick={() => setSelectedTheme(t)}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <button
+            className="versus-start-btn"
+            onClick={handleCreate}
+            disabled={themeMode === 'choose' && !selectedTheme}
+          >
+            🏠 Create Room
+          </button>
+        </div>
+      )}
+
+      {mode === 'join' && (
+        <div className="versus-form">
+          <p className="versus-form-desc">Enter the room code from your friend</p>
+          <div className="versus-name-group" style={{ width: '100%' }}>
+            <label className="versus-label">Room Code</label>
             <input
-              className="versus-input"
-              value={p2Name}
-              onChange={e => setP2Name(e.target.value)}
-              placeholder="Name..."
-              maxLength={15}
+              className="versus-input room-code-input"
+              value={joinCode}
+              onChange={e => setJoinCode(e.target.value.toUpperCase())}
+              placeholder="XXXXX"
+              maxLength={5}
+              style={{ textTransform: 'uppercase', letterSpacing: '4px', textAlign: 'center', fontSize: '24px' }}
             />
           </div>
+          <button
+            className="versus-start-btn"
+            onClick={handleJoin}
+            disabled={joinCode.trim().length < 5}
+          >
+            🚪 Join Battle!
+          </button>
         </div>
+      )}
 
-        <div className="versus-option">
-          <label className="versus-label">⏱ Timer</label>
-          <div className="versus-toggle-row">
-            <button className={`toggle-btn ${!useTimer ? 'active' : ''}`} onClick={() => setUseTimer(false)}>Off</button>
-            <button className={`toggle-btn ${useTimer ? 'active' : ''}`} onClick={() => setUseTimer(true)}>On</button>
-          </div>
-          {useTimer && (
-            <div className="timer-options">
-              {[1, 2, 3, 5].map(m => (
-                <button
-                  key={m}
-                  className={`timer-btn ${timerMinutes === m ? 'active' : ''}`}
-                  onClick={() => setTimerMinutes(m)}
-                >
-                  {m} min
-                </button>
-              ))}
+      {mode === 'lobby' && (
+        <div className="versus-form">
+          <div className="lobby-waiting">
+            <h3 className="lobby-title">Room Created! 🎉</h3>
+            <div className="lobby-code-section">
+              <span className="lobby-code-label">Share this code:</span>
+              <div className="lobby-code-display" onClick={handleCopyCode}>
+                <span className="lobby-code">{roomCode}</span>
+                <span className="lobby-copy-icon">{copied ? '✅' : '📋'}</span>
+              </div>
+              {copied && <span className="lobby-copied-text">Copied!</span>}
             </div>
-          )}
-        </div>
-
-        <div className="versus-option">
-          <label className="versus-label">🎨 Theme</label>
-          <div className="versus-toggle-row">
-            <button className={`toggle-btn ${themeMode === 'random' ? 'active' : ''}`} onClick={() => setThemeMode('random')}>🎲 Random</button>
-            <button className={`toggle-btn ${themeMode === 'choose' ? 'active' : ''}`} onClick={() => setThemeMode('choose')}>📋 Choose</button>
-          </div>
-          {themeMode === 'choose' && (
-            <div className="theme-grid">
-              {fashionThemes.map((t, i) => (
-                <button
-                  key={i}
-                  className={`theme-option ${selectedTheme === t ? 'active' : ''}`}
-                  onClick={() => setSelectedTheme(t)}
-                >
-                  {t}
-                </button>
-              ))}
+            <div className="lobby-waiting-animation">
+              <div className="loading-spinner" />
+              <p className="lobby-waiting-text">Waiting for opponent to join...</p>
             </div>
-          )}
+          </div>
         </div>
-
-        <button
-          className="versus-start-btn"
-          onClick={handleStart}
-          disabled={!canStart}
-        >
-          ⚔️ Start Battle!
-        </button>
-      </div>
+      )}
     </div>
   )
 }

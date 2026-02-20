@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import Landing from './components/Landing'
 import LevelSelect from './components/LevelSelect'
 import Quiz from './components/Quiz'
@@ -8,6 +8,7 @@ import Auth from './components/Auth'
 import Gallery from './components/Gallery'
 import Versus from './components/Versus'
 import VersusResults from './components/VersusResults'
+import socket from './utils/socket'
 import './App.css'
 
 function App() {
@@ -25,9 +26,9 @@ function App() {
   const [quizScore, setQuizScore] = useState(0)
   const [resultData, setResultData] = useState(null)
   const [reviewMode, setReviewMode] = useState(false)
-  const [versusConfig, setVersusConfig] = useState(null)
-  const [versusP1Data, setVersusP1Data] = useState(null)
-  const [versusP2Data, setVersusP2Data] = useState(null)
+  // Online 1v1 state
+  const [versusInfo, setVersusInfo] = useState(null) // { theme, timerSeconds, hostName, guestName }
+  const [versusWaiting, setVersusWaiting] = useState(false) // waiting for opponent to submit
 
   // Save progress to localStorage whenever it changes
   useEffect(() => {
@@ -73,6 +74,27 @@ function App() {
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ── Socket lifecycle for versus mode ──
+  const enterVersusMode = useCallback(() => {
+    if (!socket.connected) socket.connect()
+    setScreen('versus')
+  }, [])
+
+  const exitVersusMode = useCallback(() => {
+    socket.emit('leaveRoom')
+    socket.disconnect()
+    setVersusInfo(null)
+    setVersusWaiting(false)
+    setScreen('landing')
+  }, [])
+
+  // Listen for opponent-submitted while drawing
+  useEffect(() => {
+    const onOpponentSubmitted = () => setVersusWaiting(false) // just a notification
+    socket.on('opponentSubmitted', onOpponentSubmitted)
+    return () => socket.off('opponentSubmitted', onOpponentSubmitted)
+  }, [])
+
   const handleChooseLevel = () => setScreen('levelSelect')
 
   const handleSelectLevel = (level) => {
@@ -113,7 +135,6 @@ function App() {
       setReviewMode(true)
       setScreen('results')
     } else {
-      // No saved result, just replay
       setCurrentLevel(levelId)
       setScreen('quiz')
     }
@@ -124,37 +145,38 @@ function App() {
     setScreen('quiz')
   }
 
-  // ── 1v1 handlers ──
-  const handleVersusStart = (config) => {
-    setVersusConfig(config)
-    setVersusP1Data(null)
-    setVersusP2Data(null)
-    setScreen('versusDrawP1')
-  }
+  // ── Online 1v1 handlers ──
+  const handleVersusStartDrawing = useCallback((info) => {
+    // info = { hostName, guestName, theme, timerSeconds }
+    setVersusInfo(info)
+    setVersusWaiting(false)
+    setScreen('versusDrawing')
+  }, [])
 
-  const handleVersusP1Complete = (data) => {
-    setVersusP1Data(data)
-    setScreen('versusDrawP2')
-  }
-
-  const handleVersusP2Complete = (data) => {
-    setVersusP2Data(data)
+  const handleVersusDrawingComplete = useCallback((data) => {
+    // Send drawing to server via socket
+    socket.emit('submitDrawing', {
+      drawing: data.drawing,
+      mannequin: data.mannequin,
+      theme: data.theme,
+      outfitItems: data.outfitItems || []
+    })
+    setVersusWaiting(true)
     setScreen('versusResults')
-  }
+  }, [])
 
-  const handleVersusDone = () => {
-    setVersusConfig(null)
-    setVersusP1Data(null)
-    setVersusP2Data(null)
+  const handleVersusDone = useCallback(() => {
+    socket.emit('leaveRoom')
+    socket.disconnect()
+    setVersusInfo(null)
+    setVersusWaiting(false)
     setScreen('landing')
-  }
+  }, [])
 
   const handleLogin = (userData) => {
     setUser(userData)
     localStorage.setItem('prettyEnglishUser', JSON.stringify(userData))
-    // Fetch server progress and merge with local
     fetchAndMergeProgress(userData.id)
-    // Also push any local progress to server
     Object.entries(progress).forEach(([lvl, stars]) => {
       if (stars > 0) saveProgressToServer(userData.id, Number(lvl), stars)
     })
@@ -177,7 +199,7 @@ function App() {
           onChooseLevel={handleChooseLevel}
           onShowAuth={() => setShowAuth(true)}
           onGallery={() => setScreen('gallery')}
-          onVersus={() => setScreen('versus')}
+          onVersus={enterVersusMode}
         />
       )}
 
@@ -222,34 +244,26 @@ function App() {
       )}
 
       {screen === 'versus' && (
-        <Versus onStart={handleVersusStart} onBack={handleBackToLanding} />
-      )}
-
-      {screen === 'versusDrawP1' && versusConfig && (
-        <DrawingCanvas
-          onComplete={handleVersusP1Complete}
-          onBack={() => setScreen('versus')}
-          customTheme={versusConfig.theme}
-          timerSeconds={versusConfig.timerSeconds}
-          playerLabel={`👩‍🎨 ${versusConfig.p1Name}'s Turn`}
+        <Versus
+          socket={socket}
+          onStartDrawing={handleVersusStartDrawing}
+          onBack={exitVersusMode}
         />
       )}
 
-      {screen === 'versusDrawP2' && versusConfig && (
+      {screen === 'versusDrawing' && versusInfo && (
         <DrawingCanvas
-          onComplete={handleVersusP2Complete}
-          onBack={() => setScreen('versus')}
-          customTheme={versusConfig.theme}
-          timerSeconds={versusConfig.timerSeconds}
-          playerLabel={`🎨 ${versusConfig.p2Name}'s Turn`}
+          onComplete={handleVersusDrawingComplete}
+          onBack={exitVersusMode}
+          customTheme={versusInfo.theme}
+          timerSeconds={versusInfo.timerSeconds}
+          playerLabel="🎨 Draw your design!"
         />
       )}
 
-      {screen === 'versusResults' && versusConfig && versusP1Data && versusP2Data && (
+      {screen === 'versusResults' && (
         <VersusResults
-          config={versusConfig}
-          p1Data={versusP1Data}
-          p2Data={versusP2Data}
+          socket={socket}
           onDone={handleVersusDone}
         />
       )}
