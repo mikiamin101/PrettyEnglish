@@ -208,6 +208,17 @@
   box-shadow: 0 7px 20px rgba(0, 0, 0, 0.2);
 }
 
+.keep-drawing-btn {
+  background: linear-gradient(180deg, #667eea, #5a67d8);
+  color: white;
+  border-color: #4c51bf;
+  box-shadow: 0 4px 14px rgba(102, 126, 234, 0.4);
+}
+
+.keep-drawing-btn:hover {
+  box-shadow: 0 7px 20px rgba(102, 126, 234, 0.5);
+}
+
 .result-card {
   cursor: pointer;
   transition: transform 0.2s;

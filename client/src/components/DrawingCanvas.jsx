@@ -30,7 +30,7 @@ const MANNEQUINS = [
 
 
 
-function DrawingCanvas({ level, onComplete, onBack, customTheme, timerSeconds, playerLabel }) {
+function DrawingCanvas({ level, onComplete, onBack, customTheme, timerSeconds, playerLabel, initialData }) {
   const levelData = levels.find(l => l.id === level)
   const theme = customTheme || levelData?.theme || 'Fashion'
   const bgCanvasRef = useRef(null)    // mannequin layer (bottom, untouchable)
@@ -41,8 +41,8 @@ function DrawingCanvas({ level, onComplete, onBack, customTheme, timerSeconds, p
   const [brushSize, setBrushSize] = useState(5)
   const [tool, setTool] = useState('brush')
   const [history, setHistory] = useState([])
-  const [selectedMannequin, setSelectedMannequin] = useState(null)
-  const [outfitItems, setOutfitItems] = useState([])
+  const [selectedMannequin, setSelectedMannequin] = useState(initialData?.mannequin ?? null)
+  const [outfitItems, setOutfitItems] = useState(initialData?.outfitItems || [])
   const [itemInput, setItemInput] = useState('')
   const [zoom, setZoom] = useState(1)
   const [pan, setPan] = useState({ x: 0, y: 0 })
@@ -106,15 +106,19 @@ function DrawingCanvas({ level, onComplete, onBack, customTheme, timerSeconds, p
     mergedCtx.drawImage(bgCanvasRef.current, 0, 0)
     mergedCtx.drawImage(drawCanvasRef.current, 0, 0)
     const imageData = mergedCanvas.toDataURL('image/png')
+    // Also save the raw drawing layer for auto-submit
+    const drawingLayer = drawCanvasRef.current.toDataURL('image/png')
     onComplete({
       drawing: imageData,
+      drawingLayer,
       mannequin: selectedMannequin,
       theme,
       outfitItems
     })
   }
 
-  // Init: draw mannequin on bg canvas, clear drawing canvas
+  // Init: draw mannequin on bg canvas, restore or clear drawing canvas
+  const initialDataLoadedRef = useRef(false)
   useEffect(() => {
     if (selectedMannequin !== null) {
       const bgCanvas = bgCanvasRef.current
@@ -126,7 +130,19 @@ function DrawingCanvas({ level, onComplete, onBack, customTheme, timerSeconds, p
       if (drawCanvas) {
         const drawCtx = drawCanvas.getContext('2d')
         drawCtx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE)
-        saveToHistory()
+
+        // Restore previous drawing layer if continuing
+        if (initialData?.drawingLayer && !initialDataLoadedRef.current) {
+          initialDataLoadedRef.current = true
+          const img = new Image()
+          img.onload = () => {
+            drawCtx.drawImage(img, 0, 0)
+            saveToHistory()
+          }
+          img.src = initialData.drawingLayer
+        } else {
+          saveToHistory()
+        }
       }
     }
   }, [selectedMannequin, drawMannequin, saveToHistory])

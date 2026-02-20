@@ -104,6 +104,7 @@ function App() {
 
   const handleQuizComplete = (score) => {
     setQuizScore(score)
+    setResultData(null) // Clear so DrawingCanvas starts fresh
     setScreen('drawing')
   }
 
@@ -143,6 +144,17 @@ function App() {
   const handlePlayAgain = () => {
     setReviewMode(false)
     setScreen('quiz')
+  }
+
+  const handleContinueDrawing = () => {
+    // Load saved data and go straight to drawing canvas with previous work
+    const levelResults = JSON.parse(localStorage.getItem('prettyEnglishLevelResults') || '{}')
+    const saved = levelResults[currentLevel]
+    if (saved) {
+      setResultData(saved)
+      setReviewMode(false)
+      setScreen('drawing')
+    }
   }
 
   // ── Online 1v1 handlers ──
@@ -225,6 +237,11 @@ function App() {
           level={currentLevel}
           onComplete={handleDrawingComplete}
           onBack={() => setScreen('levelSelect')}
+          initialData={resultData?.drawingLayer ? {
+            mannequin: resultData.mannequin,
+            outfitItems: resultData.outfitItems || [],
+            drawingLayer: resultData.drawingLayer
+          } : undefined}
         />
       )}
 
@@ -236,6 +253,7 @@ function App() {
           onDone={handleResultsDone}
           reviewMode={reviewMode}
           onPlayAgain={handlePlayAgain}
+          onContinueDrawing={reviewMode ? handleContinueDrawing : undefined}
         />
       )}
 

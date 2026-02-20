@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import './Results.css'
 import { resizeImage } from '../utils/imageUtils'
 
-function Results({ level, resultData, quizScore, onDone, reviewMode, onPlayAgain }) {
+function Results({ level, resultData, quizScore, onDone, reviewMode, onPlayAgain, onContinueDrawing }) {
   const [aiImage, setAiImage] = useState(null)
   const [score, setScore] = useState(null)
   const [feedback, setFeedback] = useState('')
@@ -70,6 +70,7 @@ function Results({ level, resultData, quizScore, onDone, reviewMode, onPlayAgain
       const levelResults = JSON.parse(localStorage.getItem('prettyEnglishLevelResults') || '{}')
       levelResults[level] = {
         drawing: resultData.drawing,
+        drawingLayer: resultData.drawingLayer || null,
         aiImage: aiImg,
         score: sc,
         feedback: fb,
@@ -140,6 +141,9 @@ function Results({ level, resultData, quizScore, onDone, reviewMode, onPlayAgain
             <h2 className="bubble-text results-heading">{reviewMode ? 'Previous Design' : 'Results!'}</h2>
             {reviewMode ? (
               <>
+                {onContinueDrawing && (
+                  <button className="results-continue keep-drawing-btn" onClick={onContinueDrawing}>✏️ Keep Drawing</button>
+                )}
                 <button className="results-continue" onClick={onPlayAgain}>▶ Play Again</button>
                 <button className="results-continue" onClick={() => onDone(0)}>← Back</button>
               </>
