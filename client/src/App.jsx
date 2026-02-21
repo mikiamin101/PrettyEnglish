@@ -30,6 +30,19 @@ function App() {
   const [versusInfo, setVersusInfo] = useState(null) // { theme, timerSeconds, hostName, guestName }
   const [versusWaiting, setVersusWaiting] = useState(false) // waiting for opponent to submit
 
+  // ── Persist versus room info for reconnection ──
+  const saveRoomSession = (code, role, playerName, info) => {
+    sessionStorage.setItem('versusSession', JSON.stringify({ code, role, playerName, info }))
+  }
+  const clearRoomSession = () => {
+    sessionStorage.removeItem('versusSession')
+  }
+  const getRoomSession = () => {
+    try {
+      return JSON.parse(sessionStorage.getItem('versusSession'))
+    } catch { return null }
+  }
+
   // Save progress to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem('prettyEnglishProgress', JSON.stringify(progress))
@@ -81,6 +94,7 @@ function App() {
   }, [])
 
   const exitVersusMode = useCallback(() => {
+    clearRoomSession()
     socket.emit('leaveRoom')
     socket.disconnect()
     setVersusInfo(null)
@@ -88,9 +102,55 @@ function App() {
     setScreen('landing')
   }, [])
 
+  // Auto-rejoin room on socket reconnect
+  useEffect(() => {
+    let hasConnectedOnce = false
+
+    const onConnect = () => {
+      if (!hasConnectedOnce) {
+        hasConnectedOnce = true
+        return // First connect — not a reconnect
+      }
+      // This is a reconnect
+      const session = getRoomSession()
+      if (session) {
+        console.log('Socket reconnected, rejoining room', session.code)
+        socket._roomCode = session.code
+        socket._playerRole = session.role
+        socket._playerName = session.playerName
+        socket.emit('rejoinRoom', {
+          code: session.code,
+          role: session.role,
+          playerName: session.playerName
+        })
+      }
+    }
+
+    const onRejoinedRoom = ({ code, role }) => {
+      console.log(`Rejoined room ${code} as ${role}`)
+    }
+
+    const onRoomExpired = () => {
+      clearRoomSession()
+      setVersusInfo(null)
+      setVersusWaiting(false)
+      setScreen('landing')
+    }
+
+    socket.on('connect', onConnect)
+    socket.on('rejoinedRoom', onRejoinedRoom)
+    socket.on('roomExpired', onRoomExpired)
+
+    return () => {
+      socket.off('connect', onConnect)
+      socket.off('rejoinedRoom', onRejoinedRoom)
+      socket.off('roomExpired', onRoomExpired)
+    }
+  }, [])
+
   // Listen for opponent-submitted while drawing
   useEffect(() => {
-    const onOpponentSubmitted = () => setVersusWaiting(false) // just a notification
+    const onOpponentSubmitted = () => setVersusWaiting(false)
     socket.on('opponentSubmitted', onOpponentSubmitted)
     return () => socket.off('opponentSubmitted', onOpponentSubmitted)
   }, [])
@@ -162,6 +222,13 @@ function App() {
     // info = { hostName, guestName, theme, timerSeconds }
     setVersusInfo(info)
     setVersusWaiting(false)
+    // Persist room session for reconnection
+    const code = socket._roomCode
+    const role = socket._playerRole
+    const name = socket._playerName
+    if (code && role) {
+      saveRoomSession(code, role, name, info)
+    }
     setScreen('versusDrawing')
   }, [])
 
@@ -173,11 +240,18 @@ function App() {
       theme: data.theme,
       outfitItems: data.outfitItems || []
     })
+    // Also store drawing data locally so it survives reconnects
+    const session = getRoomSession()
+    if (session) {
+      session.submitted = true
+      sessionStorage.setItem('versusSession', JSON.stringify(session))
+    }
     setVersusWaiting(true)
     setScreen('versusResults')
   }, [])
 
   const handleVersusDone = useCallback(() => {
+    clearRoomSession()
     socket.emit('leaveRoom')
     socket.disconnect()
     setVersusInfo(null)

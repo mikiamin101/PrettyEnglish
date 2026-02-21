@@ -39,7 +39,7 @@ app.get('/api/health', (req, res) => {
 // ══════════════════════════════════════════════
 // Socket.IO — 1v1 Online Room Management
 // ══════════════════════════════════════════════
-const rooms = new Map() // roomCode -> { host, guest, theme, timerSeconds, themeMode, selectedTheme, submissions, usedThemes }
+const rooms = new Map() // roomCode -> { host, guest, theme, timerSeconds, themeMode, selectedTheme, submissions, usedThemes, disconnectTimers, cachedResults }
 
 function generateRoomCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
@@ -233,7 +233,9 @@ io.on('connection', (socket) => {
       selectedTheme: selectedTheme || null,
       submissions: {},
       usedThemes: [],
-      processing: false
+      processing: false,
+      disconnectTimers: {},
+      cachedResults: null
     })
 
     socket.join(code)
@@ -294,32 +296,98 @@ io.on('connection', (socket) => {
     }
   })
 
-  // ── Disconnect ──
+  // ── Rejoin room after reconnect ──
+  socket.on('rejoinRoom', ({ code, role, playerName }) => {
+    const room = rooms.get(code)
+    if (!room) {
+      socket.emit('error', { message: 'Room expired. Start a new battle.' })
+      socket.emit('roomExpired')
+      return
+    }
+
+    // Clear any pending disconnect timer for this role
+    if (room.disconnectTimers[role]) {
+      clearTimeout(room.disconnectTimers[role])
+      delete room.disconnectTimers[role]
+      console.log(`Cleared disconnect timer for ${role} in room ${code}`)
+    }
+
+    // Reclaim the seat
+    if (role === 'host' && room.host) {
+      room.host.id = socket.id
+    } else if (role === 'guest' && room.guest) {
+      room.guest.id = socket.id
+    } else {
+      socket.emit('error', { message: 'Could not rejoin — seat taken.' })
+      socket.emit('roomExpired')
+      return
+    }
+
+    socket.join(code)
+    socket.roomCode = code
+    socket.playerRole = role
+    socket.emit('rejoinedRoom', { code, role })
+    socket.to(code).emit('opponentReconnected')
+    console.log(`${playerName} (${role}) rejoined room ${code}`)
+
+    // If results are already cached, send them immediately
+    if (room.cachedResults) {
+      socket.emit('versusResults', room.cachedResults)
+      return
+    }
+
+    // If processing is underway, let them know
+    if (room.processing) {
+      socket.emit('processingStarted')
+    }
+  })
+
+  // ── Disconnect — grace period before cleanup ──
   socket.on('disconnect', () => {
     const code = socket.roomCode
-    if (code) {
+    const role = socket.playerRole
+    if (code && role) {
       const room = rooms.get(code)
       if (room) {
         // Notify the other player
-        socket.to(code).emit('opponentLeft')
-        // Clean up room if during lobby/drawing phase (not during processing)
-        if (!room.processing) {
+        socket.to(code).emit('opponentDisconnected')
+
+        // If in lobby (no guest yet), delete immediately
+        if (!room.guest) {
           rooms.delete(code)
-          console.log(`Room ${code} deleted (player left)`)
+          console.log(`Room ${code} deleted (host left lobby)`)
+        } else {
+          // Give 60s grace period for reconnection
+          room.disconnectTimers[role] = setTimeout(() => {
+            const r = rooms.get(code)
+            if (r && !r.cachedResults) {
+              // Room still exists and no results yet — kill it
+              io.to(code).emit('opponentLeft')
+              rooms.delete(code)
+              console.log(`Room ${code} deleted (${role} didn't reconnect in 60s)`)
+            }
+          }, 60000)
+          console.log(`${role} disconnected from room ${code}, 60s grace period started`)
         }
       }
     }
     console.log('Socket disconnected:', socket.id)
   })
 
-  // ── Leave room voluntarily ──
+  // ── Leave room voluntarily (explicit) ──
   socket.on('leaveRoom', () => {
     const code = socket.roomCode
+    const role = socket.playerRole
     if (code) {
       const room = rooms.get(code)
       if (room) {
+        // Clear any pending timer
+        if (role && room.disconnectTimers[role]) {
+          clearTimeout(room.disconnectTimers[role])
+          delete room.disconnectTimers[role]
+        }
         socket.to(code).emit('opponentLeft')
-        if (!room.processing) {
+        if (!room.processing && !room.cachedResults) {
           rooms.delete(code)
         }
       }
@@ -355,7 +423,7 @@ async function processRoom(code) {
     )
 
     // Send results to both players
-    io.to(code).emit('versusResults', {
+    const resultsPayload = {
       hostName: room.host.name,
       guestName: room.guest.name,
       theme: room.theme,
@@ -373,11 +441,18 @@ async function processRoom(code) {
       },
       winner: judgeResult.winner,
       verdict: judgeResult.feedback
-    })
+    }
 
-    // Clean up
-    rooms.delete(code)
-    console.log(`Room ${code} completed and cleaned up`)
+    // Cache results so disconnected players can get them on reconnect
+    room.cachedResults = resultsPayload
+    io.to(code).emit('versusResults', resultsPayload)
+
+    // Keep room alive for 2 minutes so reconnecting players can still get results
+    setTimeout(() => {
+      rooms.delete(code)
+      console.log(`Room ${code} expired (post-results cleanup)`)
+    }, 120000)
+    console.log(`Room ${code} completed, results cached for 2min`)
   } catch (err) {
     console.error(`Room ${code} processing error:`, err)
     io.to(code).emit('error', { message: 'Something went wrong during processing!' })

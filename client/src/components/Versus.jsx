@@ -21,10 +21,19 @@ function Versus({ socket, onStartDrawing, onBack }) {
     const onRoomCreated = ({ code }) => {
       setRoomCode(code)
       setMode('lobby')
+      // Store on socket for reconnect tracking
+      socket._roomCode = code
+      socket._playerRole = 'host'
+      socket._playerName = playerName.trim()
     }
 
     const onRoomReady = (info) => {
       setLobbyInfo(info)
+      // If we're a guest, store our role now
+      if (!socket._playerRole || socket._playerRole !== 'host') {
+        socket._playerRole = 'guest'
+        socket._playerName = playerName.trim()
+      }
       setTimeout(() => onStartDrawing(info), 2500)
     }
 
@@ -66,8 +75,12 @@ function Versus({ socket, onStartDrawing, onBack }) {
 
   const handleJoin = () => {
     if (!playerName.trim() || !joinCode.trim()) return
+    const code = joinCode.trim().toUpperCase()
+    socket._roomCode = code
+    socket._playerRole = 'guest'
+    socket._playerName = playerName.trim()
     socket.emit('joinRoom', {
-      code: joinCode.trim().toUpperCase(),
+      code,
       playerName: playerName.trim()
     })
   }
