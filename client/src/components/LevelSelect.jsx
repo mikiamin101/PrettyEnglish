@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import './LevelSelect.css'
 import { levels } from '../data/levels'
+import { getLevelThemeDisplay } from '../data/fashionThemes'
 
 function LevelSelect({ progress, onSelectLevel, onBack, onViewResult }) {
   const [selectedCompleted, setSelectedCompleted] = useState(null)
@@ -48,7 +49,7 @@ function LevelSelect({ progress, onSelectLevel, onBack, onViewResult }) {
               disabled={!unlocked}
             >
               <div className="level-number">{level.id}</div>
-              <div className="level-theme">{level.theme}</div>
+              <div className="level-theme">{getLevelThemeDisplay(level.theme).he}</div>
               {renderStars(level.id)}
               {!unlocked && <div className="lock-overlay">🔒</div>}
             </button>
@@ -60,7 +61,8 @@ function LevelSelect({ progress, onSelectLevel, onBack, onViewResult }) {
         <div className="level-popup-overlay" onClick={() => setSelectedCompleted(null)}>
           <div className="level-popup" onClick={e => e.stopPropagation()}>
             <h3 className="level-popup-title">Level {selectedCompleted}</h3>
-            <p className="level-popup-theme">{levels.find(l => l.id === selectedCompleted)?.theme}</p>
+            <p className="level-popup-theme">{getLevelThemeDisplay(levels.find(l => l.id === selectedCompleted)?.theme).he}</p>
+            <p className="level-popup-desc">{getLevelThemeDisplay(levels.find(l => l.id === selectedCompleted)?.theme).desc}</p>
             <div className="level-popup-buttons">
               <button className="level-popup-btn play-btn" onClick={() => { setSelectedCompleted(null); onSelectLevel(selectedCompleted) }}>
                 ▶ Play Again

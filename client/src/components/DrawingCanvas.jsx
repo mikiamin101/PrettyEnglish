@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import './DrawingCanvas.css'
 import { levels } from '../data/levels'
+import { getThemeDisplay, getLevelThemeDisplay } from '../data/fashionThemes'
 import ColorWheel from './ColorWheel'
 import classicMannequin from '../assets/classic.png'
 import almondMannequin from '../assets/almond.png'
@@ -33,6 +34,7 @@ const MANNEQUINS = [
 function DrawingCanvas({ level, onComplete, onBack, customTheme, timerSeconds, playerLabel, initialData }) {
   const levelData = levels.find(l => l.id === level)
   const theme = customTheme || levelData?.theme || 'Fashion'
+  const themeDisplayName = customTheme ? getThemeDisplay(customTheme) : (levelData ? getLevelThemeDisplay(levelData.theme).he : 'אופנה')
   const bgCanvasRef = useRef(null)    // mannequin layer (bottom, untouchable)
   const drawCanvasRef = useRef(null)  // drawing layer (top, user draws here)
   const [isDrawing, setIsDrawing] = useState(false)
@@ -502,7 +504,7 @@ function DrawingCanvas({ level, onComplete, onBack, customTheme, timerSeconds, p
         {/* Left info panel */}
         <div className="drawing-info-panel">
           {playerLabel && <h3 className="player-label-display">{playerLabel}</h3>}
-          <h2 className="bubble-text theme-display">🎨 {theme}</h2>
+          <h2 className="bubble-text theme-display">🎨 {themeDisplayName}</h2>
           <p className="theme-instruction">Draw an outfit on the mannequin!</p>
           {timeLeft !== null && (
             <div className={`timer-display ${timeLeft <= 10 ? 'timer-urgent' : ''}`}>

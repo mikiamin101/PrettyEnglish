@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import './VersusResults.css'
 import { resizeImage } from '../utils/imageUtils'
+import { getThemeDisplay } from '../data/fashionThemes'
 
 function VersusResults({ socket, onDone }) {
   const [phase, setPhase] = useState('waiting') // 'waiting' | 'processing' | 'judging' | 'done'
@@ -92,7 +93,7 @@ function VersusResults({ socket, onDone }) {
       ) : (
         <div className="versus-results-content">
           <h2 className="bubble-text versus-results-heading">⚔️ Battle Results!</h2>
-          <h3 className="versus-results-theme">{results.theme}</h3>
+          <h3 className="versus-results-theme">{getThemeDisplay(results.theme)}</h3>
 
           <div className="versus-results-cards">
             <div className={`versus-result-card ${results.winner === 'host' ? 'winner-card' : ''}`}>

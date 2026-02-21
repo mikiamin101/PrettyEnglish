@@ -185,9 +185,17 @@
 
 .level-popup-theme {
   font-family: 'Rubik', sans-serif;
-  font-size: 14px;
-  color: #888;
+  font-size: 16px;
+  color: #6B4226;
   margin: 0;
+  font-weight: 600;
+}
+
+.level-popup-desc {
+  font-family: 'Rubik', sans-serif;
+  font-size: 13px;
+  color: #888;
+  margin: 2px 0 0;
 }
 
 .level-popup-buttons {

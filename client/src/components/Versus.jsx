@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import './Versus.css'
-import { fashionThemes } from '../data/fashionThemes'
+import { fashionThemes, getThemeDisplay } from '../data/fashionThemes'
 
 function Versus({ socket, onStartDrawing, onBack }) {
   const [mode, setMode] = useState('menu') // 'menu' | 'create' | 'join' | 'lobby'
@@ -116,7 +116,7 @@ function Versus({ socket, onStartDrawing, onBack }) {
           </div>
           <div className="versus-theme-reveal">
             <span className="versus-theme-label">Theme:</span>
-            <span className="versus-theme-name">{lobbyInfo.theme}</span>
+            <span className="versus-theme-name">{getThemeDisplay(lobbyInfo.theme)}</span>
           </div>
           {lobbyInfo.timerSeconds && (
             <p className="versus-timer-info">⏱ {lobbyInfo.timerSeconds / 60} min timer</p>
@@ -202,10 +202,11 @@ function Versus({ socket, onStartDrawing, onBack }) {
                 {fashionThemes.map((t, i) => (
                   <button
                     key={i}
-                    className={`theme-option ${selectedTheme === t ? 'active' : ''}`}
-                    onClick={() => setSelectedTheme(t)}
+                    className={`theme-option ${selectedTheme === t.en ? 'active' : ''}`}
+                    onClick={() => setSelectedTheme(t.en)}
+                    title={t.desc}
                   >
-                    {t}
+                    {t.he}
                   </button>
                 ))}
               </div>

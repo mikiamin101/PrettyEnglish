@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from 'react'
 import './Gallery.css'
+import { getThemeDisplay, getLevelThemeDisplay } from '../data/fashionThemes'
+
+function getDisplayTheme(entry) {
+  if (entry.versus) return getThemeDisplay(entry.theme)
+  const lvl = getLevelThemeDisplay(entry.theme)
+  return lvl.he
+}
 
 function Gallery({ onBack }) {
   const [gallery, setGallery] = useState([])
@@ -47,7 +54,7 @@ function Gallery({ onBack }) {
                 className="gallery-img"
               />
               <div className="gallery-card-info">
-                <span className="gallery-theme">{entry.theme}</span>
+                <span className="gallery-theme">{getDisplayTheme(entry)}</span>
                 {entry.versus ? (
                   <span className="gallery-versus-badge">⚔️ {entry.p1Name} vs {entry.p2Name}</span>
                 ) : (
@@ -66,7 +73,7 @@ function Gallery({ onBack }) {
 
             {lightbox.versus ? (
               <>
-                <h3 className="gallery-lightbox-title">⚔️ {lightbox.theme}</h3>
+                <h3 className="gallery-lightbox-title">⚔️ {getDisplayTheme(lightbox)}</h3>
                 <div className="gallery-lightbox-versus">
                   <div className="gallery-lightbox-player">
                     <h4 className={lightbox.winner === 'p1' ? 'winner-name' : ''}>{lightbox.p1Name} {lightbox.winner === 'p1' ? '🏆' : ''}</h4>
@@ -85,7 +92,7 @@ function Gallery({ onBack }) {
               </>
             ) : (
               <>
-                <h3 className="gallery-lightbox-title">🎨 {lightbox.theme}</h3>
+                <h3 className="gallery-lightbox-title">🎨 {getDisplayTheme(lightbox)}</h3>
                 <div className="gallery-lightbox-images">
                   <div className="gallery-lightbox-side">
                     <h4>Your Design ✏️</h4>
