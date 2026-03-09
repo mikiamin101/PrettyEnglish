@@ -117,6 +117,8 @@ function Versus({ socket, onStartDrawing, onBack }) {
           <div className="versus-theme-reveal">
             <span className="versus-theme-label">Theme:</span>
             <span className="versus-theme-name">{getThemeDisplay(lobbyInfo.theme)}</span>
+            <span className="versus-theme-en">{lobbyInfo.theme}</span>
+            <p className="versus-theme-desc">{fashionThemes.find(t => t.en === lobbyInfo.theme)?.descEn}</p>
           </div>
           {lobbyInfo.timerSeconds && (
             <p className="versus-timer-info">⏱ {lobbyInfo.timerSeconds / 60} min timer</p>
@@ -198,18 +200,26 @@ function Versus({ socket, onStartDrawing, onBack }) {
               <button className={`toggle-btn ${themeMode === 'choose' ? 'active' : ''}`} onClick={() => setThemeMode('choose')}>📋 Choose</button>
             </div>
             {themeMode === 'choose' && (
-              <div className="theme-grid">
-                {fashionThemes.map((t, i) => (
-                  <button
-                    key={i}
-                    className={`theme-option ${selectedTheme === t.en ? 'active' : ''}`}
-                    onClick={() => setSelectedTheme(t.en)}
-                    title={t.desc}
-                  >
-                    {t.he}
-                  </button>
-                ))}
-              </div>
+              <>
+                <div className="theme-grid">
+                  {fashionThemes.map((t, i) => (
+                    <button
+                      key={i}
+                      className={`theme-option ${selectedTheme === t.en ? 'active' : ''}`}
+                      onClick={() => setSelectedTheme(t.en)}
+                      title={t.desc}
+                    >
+                      {t.he}
+                    </button>
+                  ))}
+                </div>
+                {selectedTheme && (
+                  <div className="theme-description-box">
+                    <div className="theme-desc-title">{selectedTheme}</div>
+                    <div className="theme-desc-text">{fashionThemes.find(t => t.en === selectedTheme)?.descEn}</div>
+                  </div>
+                )}
+              </>
             )}
           </div>
 

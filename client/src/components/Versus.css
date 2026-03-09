@@ -225,6 +225,29 @@
   color: #f093fb;
 }
 
+.theme-description-box {
+  background: rgba(240, 147, 251, 0.12);
+  border: 2px solid rgba(240, 147, 251, 0.3);
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin-top: 6px;
+  text-align: center;
+}
+
+.theme-desc-title {
+  font-family: 'Fredoka One', cursive;
+  font-size: 14px;
+  color: #f093fb;
+  margin-bottom: 4px;
+}
+
+.theme-desc-text {
+  font-family: 'Rubik', sans-serif;
+  font-size: 12px;
+  color: #888;
+  line-height: 1.4;
+}
+
 .versus-start-btn {
   font-family: 'Fredoka One', cursive;
   font-size: 20px;
@@ -385,6 +408,23 @@
   padding: 6px 20px;
   border-radius: 12px;
   text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.15);
+}
+
+.versus-theme-en {
+  font-family: 'Rubik', sans-serif;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.8);
+  margin-top: 2px;
+}
+
+.versus-theme-desc {
+  font-family: 'Rubik', sans-serif;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+  max-width: 340px;
+  line-height: 1.4;
+  margin: 6px 0 0;
+  text-align: center;
 }
 
 .versus-timer-info {
