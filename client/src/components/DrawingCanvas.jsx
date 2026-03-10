@@ -672,8 +672,8 @@ function DrawingCanvas({ level, onComplete, onBack, customTheme, timerSeconds, p
             <div className="theme-desc-dialog" onClick={e => e.stopPropagation()}>
               <h3>{themeData?.he || customTheme}</h3>
               <h4>{themeData?.en || customTheme}</h4>
-              <p>{themeData?.descEn || themeData?.desc || 'No description available.'}</p>
-              <button className="theme-desc-close" onClick={() => setShowThemeDesc(false)}>Got it! ✨</button>
+              <p>{themeData?.desc || 'אין תיאור זמין.'}</p>
+              <button className="theme-desc-close" onClick={() => setShowThemeDesc(false)}>הבנתי! ✨</button>
             </div>
           </div>
         )
