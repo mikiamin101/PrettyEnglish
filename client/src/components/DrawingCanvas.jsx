@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import './DrawingCanvas.css'
 import { levels } from '../data/levels'
-import { getThemeDisplay, getLevelThemeDisplay } from '../data/fashionThemes'
+import { fashionThemes, getThemeDisplay, getLevelThemeDisplay } from '../data/fashionThemes'
 import ColorWheel from './ColorWheel'
 import classicMannequin from '../assets/classic.png'
 import almondMannequin from '../assets/almond.png'
@@ -50,6 +50,7 @@ function DrawingCanvas({ level, onComplete, onBack, customTheme, timerSeconds, p
   const [pan, setPan] = useState({ x: 0, y: 0 })
   const [isPanning, setIsPanning] = useState(false)
   const [timeLeft, setTimeLeft] = useState(null)
+  const [showThemeDesc, setShowThemeDesc] = useState(false)
   const panStartRef = useRef(null)
   const lastPosRef = useRef(null)
   const wrapperRef = useRef(null)
@@ -504,8 +505,11 @@ function DrawingCanvas({ level, onComplete, onBack, customTheme, timerSeconds, p
         {/* Left info panel */}
         <div className="drawing-info-panel">
           {playerLabel && <h3 className="player-label-display">{playerLabel}</h3>}
-          <h2 className="bubble-text theme-display">🎨 {themeDisplayName}</h2>
-          <p className="theme-instruction">Draw an outfit on the mannequin!</p>
+          <h2
+            className={`bubble-text theme-display ${customTheme ? 'theme-clickable' : ''}`}
+            onClick={() => customTheme && setShowThemeDesc(true)}
+          >🎨 {themeDisplayName}</h2>
+          <p className="theme-instruction">{customTheme ? 'Tap the theme name for details!' : 'Draw an outfit on the mannequin!'}</p>
           {timeLeft !== null && (
             <div className={`timer-display ${timeLeft <= 10 ? 'timer-urgent' : ''}`}>
               ⏱ {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}
@@ -660,6 +664,20 @@ function DrawingCanvas({ level, onComplete, onBack, customTheme, timerSeconds, p
           </button>
         </div>
       </div>
+
+      {showThemeDesc && (() => {
+        const themeData = fashionThemes.find(t => t.en === customTheme)
+        return (
+          <div className="theme-desc-overlay" onClick={() => setShowThemeDesc(false)}>
+            <div className="theme-desc-dialog" onClick={e => e.stopPropagation()}>
+              <h3>{themeData?.he || customTheme}</h3>
+              <h4>{themeData?.en || customTheme}</h4>
+              <p>{themeData?.descEn || themeData?.desc || 'No description available.'}</p>
+              <button className="theme-desc-close" onClick={() => setShowThemeDesc(false)}>Got it! ✨</button>
+            </div>
+          </div>
+        )
+      })()}
     </div>
   )
 }
